@@ -1,16 +1,10 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"os"
-
-	"github.com/spf13/viper"
-)
-
-type (
-	IsIncluded  string
-	MetricsType string
-	Metrics     map[MetricsType]IsIncluded
 )
 
 const (
@@ -20,6 +14,7 @@ const (
 	LoadAvg      MetricsType = "load_avg"
 	CPU          MetricsType = "cpu_usage"
 	DiskUsage    MetricsType = "disk_usage"
+	DiskData     MetricsType = "disk_data"
 	TopTalkers   MetricsType = "top_talkers"
 	NetworkStats MetricsType = "network_stats"
 )
@@ -31,26 +26,29 @@ var (
 	ErrCannotParseConfig = errors.New("cannot parse config file")
 )
 
+type (
+	IsIncluded  string
+	MetricsType string
+)
+
 type Config struct {
-	Metrics Metrics
+	Metrics map[MetricsType]IsIncluded `json:"metrics"`
 }
 
 func InitConfig(cfgFile string) error {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		pwd, _ := os.Getwd()
-		viper.SetConfigName("configs/config")
-		viper.AddConfigPath(pwd)
-		viper.AutomaticEnv()
-		viper.SetConfigType("json")
+	if cfgFile == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		cfgFile = cwd + "/configs/config.json"
 	}
-
-	if err := viper.ReadInConfig(); err != nil {
+	conf, err := ioutil.ReadFile(cfgFile)
+	if err != nil {
 		return ErrCannotReadConfig
 	}
-
-	if err := viper.Unmarshal(&RequiredMetrics); err != nil {
+	err = json.Unmarshal(conf, &RequiredMetrics)
+	if err != nil {
 		return ErrCannotParseConfig
 	}
 	return nil

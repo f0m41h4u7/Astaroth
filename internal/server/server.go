@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net"
 
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
@@ -18,7 +19,7 @@ func InitServer() *Server {
 	//	app = cl
 	s := &Server{}
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpc_zap.UnaryServerInterceptor(zap.L())))
-	api.RegisterCalendarServer(grpcServer, s)
+	api.RegisterAstarothServer(grpcServer, s)
 	s.grpc = grpcServer
 	return s
 }
@@ -34,4 +35,8 @@ func (s *Server) Start() error {
 
 func (s *Server) Stop() {
 	s.grpc.GracefulStop()
+}
+
+func (s *Server) GetStats(context.Context, *api.GetRequest) (*api.GetResponse, error) {
+	return nil, nil
 }

@@ -1,33 +1,67 @@
 package collector
 
 import (
-	"io/ioutil"
+	"bufio"
+	"os"
 	"strconv"
-	"strings"
+	"time"
+
+	"github.com/f0m41h4u7/Astaroth/pkg/api"
 )
 
-func getCPU() ([]float64, error) {
-	cpu, err := ioutil.ReadFile("/proc/stat")
+var (
+	user   = float32(0.0)
+	system = float32(0.0)
+)
+
+func GetCPU() (cpu *api.CPU, err error) {
+	cpu.User, err = calculateCPU(user, "/sys/fs/cgroup/cpu/cpuacct.usage_user")
 	if err != nil {
 		return nil, err
 	}
-	content := string(cpu)
-	fields := strings.Fields(strings.Split(content, "\n")[0])
-	res := make([]float64, 3)
-
-	// %user_mode
-	res[0], err = strconv.ParseFloat(fields[1], 64)
+	cpu.System, err = calculateCPU(system, "/sys/fs/cgroup/cpu/cpuacct.usage_sys")
 	if err != nil {
-		return res, err
+		return nil, err
 	}
+	return
+}
 
-	// %system_mode
-	res[1], err = strconv.ParseFloat(fields[3], 64)
+func calculateCPU(prev float32, fname string) (float32, error) {
+	tstart := time.Now()
+	tmp, err := readCPUFile(fname)
 	if err != nil {
-		return res, err
+		return prev, err
 	}
+	cstart := float32(tmp)
+	time.Sleep(100 * time.Millisecond)
+	tmp, err = readCPUFile(fname)
+	if err != nil {
+		return prev, err
+	}
+	tstop := time.Now()
+	cstop := float32(tmp)
+	if cstop > cstart {
+		duration := float32(tstop.Sub(tstart).Nanoseconds())
+		if prev == 0 {
+			prev = (cstop - cstart) / duration * 100.0
+		} else {
+			prev = 0.8*prev + 0.2*((cstop-cstart)/duration*100.0)
+		}
+	}
+	return prev, nil
+}
 
-	// %idle
-	res[2], err = strconv.ParseFloat(fields[4], 64)
-	return res, err
+func readCPUFile(fname string) (int, error) {
+	file, err := os.Open(fname)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	line := scanner.Text()
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(line)
 }
