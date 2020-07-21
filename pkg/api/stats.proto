@@ -20,9 +20,14 @@ message DiskUsage {
   CPU CPU = 3;
 }
 
+message FilesystemData {
+  string Filesystem = 1;
+  int64  Used       = 2;
+  int64  Inode      = 3;
+}
+
 message DiskData {
-  float Used  = 1;
-  float Inode = 2;
+  repeated FilesystemData FilesystemData = 1;
 }
 
 message ByProtocol {
