@@ -20,11 +20,6 @@ env:
     - GOPROXY=https://proxy.golang.org
     - BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
 
-before_install:
-  - echo "current branch is ${BRANCH}"
-  - if [ "${BRANCH}" == "master" ]; then travis_terminate 0; fi
-  - ls ${BRANCH} && cd ${BRANCH}
-
 stages:
   - name: Lint
   - name: Test
@@ -32,7 +27,7 @@ stages:
 jobs:
   include:
     - stage: "Lint"
-      name: "Golangci-lint"
+      name: "golangci-lint"
       script: make lint
 
     - stage: "Test"
@@ -41,6 +36,6 @@ jobs:
       script: cd /tmp && go get "github.com/${TRAVIS_REPO_SLUG}/${BRANCH}@${BRANCH}"
 
     - stage: "Test"
-      name: "Unit tests"
+      name: "unit tests"
       install: go mod download
       script: make test
