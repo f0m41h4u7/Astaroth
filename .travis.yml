@@ -21,11 +21,16 @@ env:
     - BRANCH="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
 
 stages:
+  - name: Build
   - name: Lint
   - name: Test
 
 jobs:
   include:
+    - stage: "Build"
+      name: "build"
+      script: make build
+
     - stage: "Lint"
       name: "golangci-lint"
       script: make lint
