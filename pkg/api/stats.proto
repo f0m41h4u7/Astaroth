@@ -14,10 +14,15 @@ message CPU {
   float System = 2;
 }
 
+message DiskStat {
+  string Device = 1;
+  int64  Tps    = 2;
+  int64  Kbs    = 3;
+  CPU    CPU    = 4;
+}
+
 message DiskUsage {
-  int64 Tps = 1;
-  int64 Kbs = 2;
-  CPU CPU = 3;
+  repeated DiskStat Stat = 1;
 }
 
 message FilesystemData {
@@ -27,7 +32,7 @@ message FilesystemData {
 }
 
 message DiskData {
-  repeated FilesystemData FilesystemData = 1;
+  repeated FilesystemData Data = 1;
 }
 
 message ByProtocol {

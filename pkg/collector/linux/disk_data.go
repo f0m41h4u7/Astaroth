@@ -1,4 +1,4 @@
-package collector
+package linux
 
 import (
 	"errors"
@@ -31,7 +31,7 @@ func parseDiskData(mb string, inode string) (*api.DiskData, error) {
 	mbLines := strings.Split(mb, "\n")[1:]
 	inodeLines := strings.Split(inode, "\n")[1:]
 	disk := api.DiskData{
-		FilesystemData: make([]*api.FilesystemData, len(mbLines)),
+		Data: make([]*api.FilesystemData, len(mbLines)),
 	}
 
 	if (len(mb) == 0) || (len(inode) == 0) {
@@ -57,7 +57,7 @@ func parseDiskData(mb string, inode string) (*api.DiskData, error) {
 			return &disk, ErrCannotParseInode
 		}
 
-		disk.FilesystemData[i] = &api.FilesystemData{
+		disk.Data[i] = &api.FilesystemData{
 			Filesystem: fs,
 			Used:       used,
 			Inode:      iused,

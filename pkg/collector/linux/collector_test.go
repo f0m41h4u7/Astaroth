@@ -1,4 +1,4 @@
-package collector
+package linux
 
 import (
 	"testing"
@@ -8,12 +8,12 @@ import (
 
 func TestCPU(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
-		cpu, err := readCPUFile("../../tests/testdata/cpu.txt")
+		cpu, err := readCPUFile("../../../tests/testdata/cpu.txt")
 		require.Nil(t, err)
 		require.Equal(t, 42055566250653, cpu)
 	})
 	t.Run("wrong file", func(t *testing.T) {
-		_, err := readCPUFile("../../tests/testdata/bad_file.txt")
+		_, err := readCPUFile("../../../tests/testdata/bad_file.txt")
 		require.NotNil(t, err)
 	})
 	t.Run("nonexistent file", func(t *testing.T) {
@@ -24,7 +24,7 @@ func TestCPU(t *testing.T) {
 
 func TestLoadAvg(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
-		la, err := readLoadAvgFile("../../tests/testdata/loadavg.txt")
+		la, err := readLoadAvgFile("../../../tests/testdata/loadavg.txt")
 		require.Nil(t, err)
 		require.Equal(t, "0.94", la[0])
 		require.Equal(t, "1.49", la[1])
@@ -33,7 +33,7 @@ func TestLoadAvg(t *testing.T) {
 		require.Equal(t, "924", la[4])
 	})
 	t.Run("wrong file", func(t *testing.T) {
-		_, err := readLoadAvgFile("../../tests/testdata/bad_file.txt")
+		_, err := readLoadAvgFile("../../../tests/testdata/bad_file.txt")
 		require.NotNil(t, err)
 	})
 	t.Run("nonexistent file", func(t *testing.T) {
@@ -69,10 +69,10 @@ tmpfs                   126993     16   126977    1% /sys/fs/cgroup
 tmpfs                   126993      5   126988    1% /run/user/0`
 		data, err := parseDiskData(mb, inode)
 		require.Nil(t, err)
-		require.Equal(t, 10, len(data.FilesystemData))
-		require.Equal(t, "main/containers/proxy", data.FilesystemData[0].Filesystem)
-		require.Equal(t, int64(11), data.FilesystemData[6].Used)
-		require.Equal(t, int64(1), data.FilesystemData[3].Inode)
+		require.Equal(t, 10, len(data.Data))
+		require.Equal(t, "main/containers/proxy", data.Data[0].Filesystem)
+		require.Equal(t, int64(11), data.Data[6].Used)
+		require.Equal(t, int64(1), data.Data[3].Inode)
 	})
 
 	t.Run("empty data", func(t *testing.T) {

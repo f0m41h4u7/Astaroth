@@ -16,7 +16,6 @@ type Server struct {
 }
 
 func InitServer() *Server {
-	//	app = cl
 	s := &Server{}
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpc_zap.UnaryServerInterceptor(zap.L())))
 	api.RegisterAstarothServer(grpcServer, s)
