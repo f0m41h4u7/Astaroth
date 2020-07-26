@@ -14,9 +14,11 @@ import (
 	"google.golang.org/grpc"
 )
 
-var ErrWrongInervals = errors.New("send interval should be less than average interval and positive")
-
 //go:generate protoc --proto_path=../../pkg/api/ --go_out=plugins=grpc:../../pkg/api ../../pkg/api/stats.proto
+
+var errWrongInervals = errors.New("send interval should be less than average interval and positive")
+
+// Server is a GRPC streaming server
 type Server struct {
 	grpc            *grpc.Server
 	addr            string
@@ -26,6 +28,7 @@ type Server struct {
 	collector       *linux.Collector
 }
 
+// InitServer initializes Server
 func InitServer(addr string) *Server {
 	s := &Server{
 		addr:            addr,
@@ -38,6 +41,7 @@ func InitServer(addr string) *Server {
 	return s
 }
 
+// Start Server
 func (s *Server) Start() error {
 	lis, err := net.Listen("tcp", s.addr)
 	if err != nil {
@@ -48,10 +52,11 @@ func (s *Server) Start() error {
 	return err
 }
 
+// Connect to Server
 func (s *Server) Connect(ctx context.Context, req *api.ConnectRequest) (*empty.Empty, error) {
 	resp := &empty.Empty{}
 	if (req.SendInterval > req.AverageInterval) || (req.SendInterval <= 0) {
-		return resp, ErrWrongInervals
+		return resp, errWrongInervals
 	}
 
 	s.sendInterval = req.SendInterval
@@ -59,6 +64,7 @@ func (s *Server) Connect(ctx context.Context, req *api.ConnectRequest) (*empty.E
 	return resp, nil
 }
 
+// GetStats returns collected statistics
 func (s *Server) GetStats(_ *empty.Empty, srv api.Astaroth_GetStatsServer) error {
 	log.Printf("new stats listener")
 	s.collector = linux.NewCollector(s.averageInterval / s.sendInterval)
@@ -94,6 +100,7 @@ func (s *Server) GetStats(_ *empty.Empty, srv api.Astaroth_GetStatsServer) error
 	return nil
 }
 
+// Stop Server
 func (s *Server) Stop() {
 	s.grpc.GracefulStop()
 }
