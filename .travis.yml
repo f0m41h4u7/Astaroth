@@ -37,7 +37,7 @@ jobs:
 
     - stage: "Test"
       name: "go get"
-      script: cd /tmp && go get "github.com/${TRAVIS_REPO_SLUG}/${BRANCH}@${BRANCH}"
+      script: cd /tmp && go get "github.com/${TRAVIS_REPO_SLUG}@${BRANCH}"
 
     - stage: "Test"
       name: "unit tests"
