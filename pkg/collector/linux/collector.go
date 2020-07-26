@@ -41,47 +41,14 @@ func (c *Collector) CollectStats() error {
 	if config.RequiredMetrics.Metrics[config.CPU] == config.On {
 		wg.Add(1)
 		go func() {
-			var mutex sync.RWMutex
-			cpu, err := GetCPU(&wg)
-			if err != nil {
-				errs <- err
-				return
-			}
-			mutex.RLock()
-			if c.storage.idx < c.size {
-				c.storage.cpu[c.storage.idx] = cpu
-				c.storage.idx++
-				mutex.RUnlock()
-				return
-			}
-			mutex.RUnlock()
-			for i := 0; i < int(c.size-1); i++ {
-				c.storage.cpu[i] = c.storage.cpu[i+1]
-			}
-			c.storage.cpu[c.size-1] = cpu
+			errs <- c.getCPU(&wg)
 		}()
 	}
 
 	if config.RequiredMetrics.Metrics[config.LoadAvg] == config.On {
 		wg.Add(1)
 		go func() {
-			var mutex sync.RWMutex
-			la, err := GetLoadAvg(&wg)
-			if err != nil {
-				errs <- err
-			}
-			mutex.RLock()
-			if c.storage.idx < c.size {
-				c.storage.loadAvg[c.storage.idx] = la
-				c.storage.idx++
-				mutex.RUnlock()
-				return
-			}
-			mutex.RUnlock()
-			for i := 0; i < int(c.size-1); i++ {
-				c.storage.loadAvg[i] = c.storage.loadAvg[i+1]
-			}
-			c.storage.loadAvg[c.size-1] = la
+			errs <- c.getLoadAvg(&wg)
 		}()
 	}
 

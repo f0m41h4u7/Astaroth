@@ -15,22 +15,37 @@ var (
 	system = 0.0
 )
 
-// GetCPU collects CPU usage data.
-func GetCPU(wg *sync.WaitGroup) (*api.CPU, error) {
+func (c *Collector) getCPU(wg *sync.WaitGroup) error {
 	defer wg.Done()
+
 	cpu := new(api.CPU)
 	var err error
 	cpu.User, err = calculateCPU(user, "/sys/fs/cgroup/cpu/cpuacct.usage_user")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	user = cpu.User
 	cpu.System, err = calculateCPU(system, "/sys/fs/cgroup/cpu/cpuacct.usage_sys")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	system = cpu.System
-	return cpu, nil
+
+	var mutex sync.RWMutex
+	mutex.RLock()
+	if c.storage.idx < c.size {
+		c.storage.cpu[c.storage.idx] = cpu
+		c.storage.idx++
+		mutex.RUnlock()
+		return nil
+	}
+	mutex.RUnlock()
+	for i := 0; i < int(c.size-1); i++ {
+		c.storage.cpu[i] = c.storage.cpu[i+1]
+	}
+	c.storage.cpu[c.size-1] = cpu
+
+	return nil
 }
 
 func calculateCPU(prev float64, fname string) (float64, error) {

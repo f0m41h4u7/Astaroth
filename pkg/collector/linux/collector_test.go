@@ -26,6 +26,7 @@ func TestCPU(t *testing.T) {
 func TestLoadAvg(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		la, err := readLoadAvgFile("../../../tests/testdata/loadavg.txt")
+		require.Nil(t, err)
 		_, err = strconv.ParseFloat(la[0], 32)
 		require.Nil(t, err)
 		_, err = strconv.ParseFloat(la[1], 32)

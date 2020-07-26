@@ -1,7 +1,8 @@
 CMD := astaroth
+CLIENT_CMD := client
 
 build:
-	go build -o $(CMD) ./cmd/main.go
+	go build -o $(CMD) ./cmd/astaroth/main.go
 
 run:
 	make build
@@ -15,9 +16,12 @@ lint:
 	golangci-lint run ./...
 
 clean:
-	rm $(CMD)
+	rm $(CMD) $(CLIENT_CMD)
 
 gen:
 	go generate ./...
 
-.PHONY: test lint clean gen
+client:
+	go build -o $(CLIENT_CMD) ./cmd/client/main.go
+
+.PHONY: test lint clean gen client
