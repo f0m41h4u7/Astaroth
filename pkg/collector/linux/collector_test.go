@@ -1,6 +1,7 @@
 package linux
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,12 +26,21 @@ func TestCPU(t *testing.T) {
 func TestLoadAvg(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		la, err := readLoadAvgFile("../../../tests/testdata/loadavg.txt")
+		_, err = strconv.ParseFloat(la[0], 32)
+		require.Nil(t, err)
+		_, err = strconv.ParseFloat(la[1], 32)
+		require.Nil(t, err)
+		_, err = strconv.ParseFloat(la[2], 32)
+		require.Nil(t, err)
+		procsRun, err := strconv.Atoi(la[3])
+		require.Nil(t, err)
+		procsTotal, err := strconv.Atoi(la[4])
 		require.Nil(t, err)
 		require.Equal(t, "0.94", la[0])
 		require.Equal(t, "1.49", la[1])
 		require.Equal(t, "1.63", la[2])
-		require.Equal(t, "1", la[3])
-		require.Equal(t, "924", la[4])
+		require.Equal(t, 1, procsRun)
+		require.Equal(t, 924, procsTotal)
 	})
 	t.Run("wrong file", func(t *testing.T) {
 		_, err := readLoadAvgFile("../../../tests/testdata/bad_file.txt")
@@ -78,5 +88,30 @@ tmpfs                   126993      5   126988    1% /run/user/0`
 	t.Run("empty data", func(t *testing.T) {
 		_, err := parseDiskData("", "")
 		require.NotNil(t, err)
+	})
+}
+
+func TestNetworkStats(t *testing.T) {
+	t.Run("simple", func(t *testing.T) {
+		data := `State                        Recv-Q                    Send-Q                                         Local Address:Port                                                Peer Address:Port                     Process                    
+LISTEN                       0                         5                                                  127.0.0.1:dey-sapi                                                 0.0.0.0:*                                                   
+LISTEN                       0                         5                                                    0.0.0.0:cvsup                                                    0.0.0.0:*                                                   
+LISTEN                       0                         32                                             192.168.122.1:domain                                                   0.0.0.0:*                                                   
+LISTEN                       0                         128                                                  0.0.0.0:ssh                                                      0.0.0.0:*                                                   
+LISTEN                       0                         5                                                  127.0.0.1:ipp                                                      0.0.0.0:*                                                   
+ESTAB                        0                         0                                              192.168.0.1:8882                                             123.123.23.213:https                                               
+ESTAB                        0                         0                                              192.168.0.1:8884                                               123.232.23.23:https                                               
+ESTAB                        0                         0                                              192.168.0.1:8885                                               111.16.10.14:https                                               
+ESTAB                        0                         0                                              192.168.0.1:8886                                                232.75.122.24:https                                               
+ESTAB                        0                         0                                              192.168.0.1:8887                                             151.101.65.140:https                                               
+ESTAB                        0                         0                                              192.168.0.1:8888                                             173.194.73.113:https                                               
+ESTAB                        0                         0                                              192.168.0.1:8889                                            123.101.245.140:https                                               
+TIME-WAIT                    0                         0                                              192.168.0.1:9090                                              123.176.176.76:https                                               
+ESTAB                        0                         0                                              192.168.0.1:9091                                            123.143.432.97:https`
+		res := parseTCPConnections(data)
+		require.Equal(t, 6, len(res))
+		require.Equal(t, int64(5), res["LISTEN"])
+		require.Equal(t, int64(1), res["TIME-WAIT"])
+		require.Equal(t, int64(8), res["ESTAB"])
 	})
 }

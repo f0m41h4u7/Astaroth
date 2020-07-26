@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
 )
@@ -13,38 +14,36 @@ import (
 var errCannotParseLoadAvg = errors.New("cannot parse loadavg file")
 
 // GetLoadavg collects load average.
-func GetLoadavg() (loadAvg *api.LoadAvg, err error) {
+func GetLoadAvg(wg *sync.WaitGroup) (*api.LoadAvg, error) {
+	loadAvg := new(api.LoadAvg)
+	defer wg.Done()
 	l, err := readLoadAvgFile("/proc/loadavg")
 	if err != nil {
-		return
+		return nil, err
 	}
-	var tmp float64
 
-	tmp, err = strconv.ParseFloat(l[0], 32)
+	loadAvg.OneMin, err = strconv.ParseFloat(l[0], 32)
 	if err != nil {
-		return
+		return nil, err
 	}
-	loadAvg.OneMin = float32(tmp)
 
-	tmp, err = strconv.ParseFloat(l[1], 32)
+	loadAvg.FiveMin, err = strconv.ParseFloat(l[1], 32)
 	if err != nil {
-		return
+		return nil, err
 	}
-	loadAvg.FiveMin = float32(tmp)
 
-	tmp, err = strconv.ParseFloat(l[2], 32)
+	loadAvg.FifteenMin, err = strconv.ParseFloat(l[2], 32)
 	if err != nil {
-		return
+		return nil, err
 	}
-	loadAvg.FifteenMin = float32(tmp)
 
 	loadAvg.ProcsRunning, err = strconv.ParseInt(l[3], 10, 64)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	loadAvg.TotalProcs, err = strconv.ParseInt(l[4], 10, 64)
-	return
+	return loadAvg, nil
 }
 
 func readLoadAvgFile(fname string) (res [5]string, err error) {

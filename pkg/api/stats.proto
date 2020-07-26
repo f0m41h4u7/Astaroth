@@ -5,16 +5,16 @@ import "google/protobuf/empty.proto";
 option go_package=".;api";
 
 message LoadAvg {
-  float OneMin        = 1;
-  float FiveMin       = 2;
-  float FifteenMin    = 3;
-  int64 ProcsRunning  = 4;
-  int64 TotalProcs    = 5; 
+  double OneMin        = 1;
+  double FiveMin       = 2;
+  double FifteenMin    = 3;
+  int64  ProcsRunning  = 4;
+  int64  TotalProcs    = 5; 
 }
 
 message CPU {
-  float User   = 1;
-  float System = 2;
+  double User   = 1;
+  double System = 2;
 }
 
 message DiskStat {
@@ -41,7 +41,7 @@ message DiskData {
 message ByProtocol {
   string Protocol   = 1;
   int64  Bytes      = 2;
-  float  Percentage = 3;
+  double Percentage = 3;
 }
 
 message ByTraffic {
@@ -65,13 +65,16 @@ message Sockets {
 }
 
 message States {
-  int64 ESTAB    = 1;
-  int64 FIN_WAIT = 2;
-  int64 SYN_RCV  = 3;
+  int64 LISTEN     = 1;
+  int64 ESTAB      = 2;
+  int64 FIN_WAIT   = 3;
+  int64 SYN_RCV    = 4;
+  int64 TIME_WAIT  = 5;
+  int64 CLOSE_WAIT = 6;
 }
 
 message NetworkStats {
-  Sockets ListenSockets = 1;
+  repeated Sockets ListenSockets = 1;
   States  TCPConnStates = 2;
 }
 

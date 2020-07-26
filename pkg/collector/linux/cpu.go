@@ -4,18 +4,20 @@ import (
 	"bufio"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
 )
 
 var (
-	user   = float32(0.0)
-	system = float32(0.0)
+	user   = 0.0
+	system = 0.0
 )
 
 // GetCPU collects CPU usage data.
-func GetCPU() (*api.CPU, error) {
+func GetCPU(wg *sync.WaitGroup) (*api.CPU, error) {
+	defer wg.Done()
 	cpu := new(api.CPU)
 	var err error
 	cpu.User, err = calculateCPU(user, "/sys/fs/cgroup/cpu/cpuacct.usage_user")
@@ -31,7 +33,7 @@ func GetCPU() (*api.CPU, error) {
 	return cpu, nil
 }
 
-func calculateCPU(prev float32, fname string) (float32, error) {
+func calculateCPU(prev float64, fname string) (float64, error) {
 	tstart := time.Now().UnixNano()
 	cstart, err := readCPUFile(fname)
 	if err != nil {
@@ -45,7 +47,7 @@ func calculateCPU(prev float32, fname string) (float32, error) {
 	tstop := time.Now().UnixNano()
 	if cstop > cstart {
 		duration := tstop - tstart
-		prev = float32(cstop-cstart) / float32(duration) * 100.0
+		prev = float64(cstop-cstart) / float64(duration) * 100.0
 	}
 	return prev, nil
 }
