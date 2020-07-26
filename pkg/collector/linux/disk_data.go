@@ -10,11 +10,12 @@ import (
 )
 
 var (
-	ErrWrongDiskData    = errors.New("cannot parse disk data")
-	ErrCannotParseUsed  = errors.New("cannot parse used percentage")
-	ErrCannotParseInode = errors.New("cannot parse inode percentage")
+	errWrongDiskData    = errors.New("cannot parse disk data")
+	errCannotParseUsed  = errors.New("cannot parse used percentage")
+	errCannotParseInode = errors.New("cannot parse inode percentage")
 )
 
+// GetDiskData collects information about disk usage
 func GetDiskData() (*api.DiskData, error) {
 	mb, err := exec.Command("df", "-k").Output()
 	if err != nil {
@@ -35,26 +36,26 @@ func parseDiskData(mb string, inode string) (*api.DiskData, error) {
 	}
 
 	if (len(mb) == 0) || (len(inode) == 0) {
-		return &disk, ErrWrongDiskData
+		return &disk, errWrongDiskData
 	}
 
 	if len(mbLines) != len(inodeLines) {
-		return &disk, ErrWrongDiskData
+		return &disk, errWrongDiskData
 	}
 	for i := 0; i < len(mbLines); i++ {
 		fields := strings.Fields(strings.TrimSpace(mbLines[i]))
 		fs := fields[0]
 		used, err := strconv.ParseInt(strings.Split(fields[4], "%")[0], 10, 64)
 		if err != nil {
-			return &disk, ErrCannotParseUsed
+			return &disk, errCannotParseUsed
 		}
 		fields = strings.Fields(strings.TrimSpace(inodeLines[i]))
 		if fs != fields[0] {
-			return &disk, ErrWrongDiskData
+			return &disk, errWrongDiskData
 		}
 		iused, err := strconv.ParseInt(strings.Split(fields[4], "%")[0], 10, 64)
 		if err != nil {
-			return &disk, ErrCannotParseInode
+			return &disk, errCannotParseInode
 		}
 
 		disk.Data[i] = &api.FilesystemData{

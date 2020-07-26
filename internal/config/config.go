@@ -7,34 +7,38 @@ import (
 	"os"
 )
 
+// Available metrics
 const (
-	On  IsIncluded = "on"
-	Off IsIncluded = "off"
+	On  isIncluded = "on"
+	Off isIncluded = "off"
 
-	LoadAvg      MetricsType = "load_avg"
-	CPU          MetricsType = "cpu_usage"
-	DiskUsage    MetricsType = "disk_usage"
-	DiskData     MetricsType = "disk_data"
-	TopTalkers   MetricsType = "top_talkers"
-	NetworkStats MetricsType = "network_stats"
+	LoadAvg      metricsType = "load_avg"
+	CPU          metricsType = "cpu_usage"
+	DiskUsage    metricsType = "disk_usage"
+	DiskData     metricsType = "disk_data"
+	TopTalkers   metricsType = "top_talkers"
+	NetworkStats metricsType = "network_stats"
 )
 
 var (
+	// RequiredMetrics is a global Config
 	RequiredMetrics Config
 
-	ErrCannotReadConfig  = errors.New("cannot read config file")
-	ErrCannotParseConfig = errors.New("cannot parse config file")
+	errCannotReadConfig  = errors.New("cannot read config file")
+	errCannotParseConfig = errors.New("cannot parse config file")
 )
 
 type (
-	IsIncluded  string
-	MetricsType string
+	isIncluded  string
+	metricsType string
 )
 
+// Config states which metrics are required
 type Config struct {
-	Metrics map[MetricsType]IsIncluded `json:"metrics"`
+	Metrics map[metricsType]isIncluded `json:"metrics"`
 }
 
+// InitConfig initializes RequiredMetrics config
 func InitConfig(cfgFile string) error {
 	if cfgFile == "" {
 		cwd, err := os.Getwd()
@@ -45,11 +49,11 @@ func InitConfig(cfgFile string) error {
 	}
 	conf, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
-		return ErrCannotReadConfig
+		return errCannotReadConfig
 	}
 	err = json.Unmarshal(conf, &RequiredMetrics)
 	if err != nil {
-		return ErrCannotParseConfig
+		return errCannotParseConfig
 	}
 	return nil
 }
