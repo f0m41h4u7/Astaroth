@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package=".;api";
+
+message LoadAvg {
+  float OneMin        = 1;
+  float FiveMin       = 2;
+  float FifteenMin    = 3;
+  int64 ProcsRunning  = 4;
+  int64 TotalProcs    = 5; 
+}
+
+message CPU {
+  float User   = 1;
+  float System = 2;
+}
+
+message DiskStat {
+  string Device = 1;
+  int64  Tps    = 2;
+  int64  Kbs    = 3;
+  CPU    CPU    = 4;
+}
+
+message DiskUsage {
+  repeated DiskStat Stat = 1;
+}
+
+message FilesystemData {
+  string Filesystem = 1;
+  int64  Used       = 2;
+  int64  Inode      = 3;
+}
+
+message DiskData {
+  repeated FilesystemData Data = 1;
+}
+
+message ByProtocol {
+  string Protocol   = 1;
+  int64  Bytes      = 2;
+  float  Percentage = 3;
+}
+
+message ByTraffic {
+  string SourceAddr = 1;
+  string DestAddr   = 2;
+  string Protocol   = 3;
+  int64  Bps        = 4;
+}
+
+message TopTalkers {
+  repeated ByProtocol ByProtocol = 1;
+  repeated ByTraffic  ByTraffic  = 2;
+}
+
+message Sockets {
+  string Command  = 1;
+  int64  PID      = 2;
+  string User     = 3;
+  string Protocol = 4;
+  int64  Port     = 5;
+}
+
+message States {
+  int64 ESTAB    = 1;
+  int64 FIN_WAIT = 2;
+  int64 SYN_RCV  = 3;
+}
+
+message NetworkStats {
+  Sockets ListenSockets = 1;
+  States  TCPConnStates = 2;
+}
+
+message Stats {
+  LoadAvg      LoadAvg      = 1;
+  CPU          CPU          = 2;
+  DiskUsage    DiskUsage    = 3;
+  DiskData     DiskData     = 4;
+  TopTalkers   TopTalkers   = 5;
+  NetworkStats NetworkStats = 6;
+}
+
+message ConnectRequest {
+  int64 SendInterval    = 1;
+  int64 AverageInterval = 2;
+}
+
+service Astaroth {
+  rpc Connect(ConnectRequest) returns (google.protobuf.Empty) {};
+  rpc GetStats(google.protobuf.Empty) returns (stream Stats) {};
+}
