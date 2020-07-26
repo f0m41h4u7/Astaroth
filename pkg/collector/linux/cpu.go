@@ -14,39 +14,37 @@ var (
 	system = float32(0.0)
 )
 
-func GetCPU() (cpu *api.CPU, err error) {
+func GetCPU() (*api.CPU, error) {
+	cpu := new(api.CPU)
+	var err error
 	cpu.User, err = calculateCPU(user, "/sys/fs/cgroup/cpu/cpuacct.usage_user")
 	if err != nil {
 		return nil, err
 	}
+	user = cpu.User
 	cpu.System, err = calculateCPU(system, "/sys/fs/cgroup/cpu/cpuacct.usage_sys")
 	if err != nil {
 		return nil, err
 	}
-	return
+	system = cpu.System
+	return cpu, nil
 }
 
 func calculateCPU(prev float32, fname string) (float32, error) {
-	tstart := time.Now()
-	tmp, err := readCPUFile(fname)
+	tstart := time.Now().UnixNano()
+	cstart, err := readCPUFile(fname)
 	if err != nil {
 		return prev, err
 	}
-	cstart := float32(tmp)
-	time.Sleep(100 * time.Millisecond)
-	tmp, err = readCPUFile(fname)
+	time.Sleep(10 * time.Millisecond)
+	cstop, err := readCPUFile(fname)
 	if err != nil {
 		return prev, err
 	}
-	tstop := time.Now()
-	cstop := float32(tmp)
+	tstop := time.Now().UnixNano()
 	if cstop > cstart {
-		duration := float32(tstop.Sub(tstart).Nanoseconds())
-		if prev == 0 {
-			prev = (cstop - cstart) / duration * 100.0
-		} else {
-			prev = 0.8*prev + 0.2*((cstop-cstart)/duration*100.0)
-		}
+		duration := tstop - tstart
+		prev = float32(cstop-cstart) / float32(duration) * 100.0
 	}
 	return prev, nil
 }

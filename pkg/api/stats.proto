@@ -1,4 +1,7 @@
 syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
 option go_package=".;api";
 
 message LoadAvg {
@@ -81,14 +84,12 @@ message Stats {
   NetworkStats NetworkStats = 6;
 }
 
-message GetRequest {
-
-}
-
-message GetResponse {
-  Stats Stats = 1;
+message ConnectRequest {
+  int64 SendInterval    = 1;
+  int64 AverageInterval = 2;
 }
 
 service Astaroth {
-  rpc GetStats(GetRequest) returns (GetResponse) {};
+  rpc Connect(ConnectRequest) returns (google.protobuf.Empty) {};
+  rpc GetStats(google.protobuf.Empty) returns (stream Stats) {};
 }
