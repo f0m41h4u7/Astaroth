@@ -12,7 +12,7 @@ import (
 
 var errCannotParseLoadAvg = errors.New("cannot parse loadavg file")
 
-// GetLoadavg collects load average
+// GetLoadavg collects load average.
 func GetLoadavg() (loadAvg *api.LoadAvg, err error) {
 	l, err := readLoadAvgFile("/proc/loadavg")
 	if err != nil {

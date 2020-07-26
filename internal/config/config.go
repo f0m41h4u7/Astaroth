@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// Available metrics
+// Available metrics.
 const (
 	On  isIncluded = "on"
 	Off isIncluded = "off"
@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	// RequiredMetrics is a global Config
+	// RequiredMetrics is a global Config.
 	RequiredMetrics Config
 
 	errCannotReadConfig  = errors.New("cannot read config file")
@@ -33,12 +33,12 @@ type (
 	metricsType string
 )
 
-// Config states which metrics are required
+// Config states which metrics are required.
 type Config struct {
 	Metrics map[metricsType]isIncluded `json:"metrics"`
 }
 
-// InitConfig initializes RequiredMetrics config
+// InitConfig initializes RequiredMetrics config.
 func InitConfig(cfgFile string) error {
 	if cfgFile == "" {
 		cwd, err := os.Getwd()

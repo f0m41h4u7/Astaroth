@@ -15,7 +15,7 @@ var (
 	errCannotParseInode = errors.New("cannot parse inode percentage")
 )
 
-// GetDiskData collects information about disk usage
+// GetDiskData collects information about disk usage.
 func GetDiskData() (*api.DiskData, error) {
 	mb, err := exec.Command("df", "-k").Output()
 	if err != nil {

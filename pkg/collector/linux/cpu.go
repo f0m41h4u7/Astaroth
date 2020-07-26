@@ -14,7 +14,7 @@ var (
 	system = float32(0.0)
 )
 
-// GetCPU collects CPU usage data
+// GetCPU collects CPU usage data.
 func GetCPU() (*api.CPU, error) {
 	cpu := new(api.CPU)
 	var err error

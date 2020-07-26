@@ -4,7 +4,7 @@ import (
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
 )
 
-// MetricsStorage stores last metrics measurements
+// MetricsStorage stores last metrics measurements.
 type MetricsStorage struct {
 	idx int64
 	cpu []*api.CPU
@@ -28,7 +28,7 @@ func NewCollector(size int64) *Collector {
 	}
 }
 
-// CollectStats makes measurements and updates MetricsStorage
+// CollectStats makes measurements and updates MetricsStorage.
 func (c *Collector) CollectStats() error {
 	cpu, err := GetCPU()
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *Collector) CollectStats() error {
 	return nil
 }
 
-// SendStats returns average values of metrics
+// SendStats returns average values of metrics.
 func (c *Collector) SendStats() *api.Stats {
 	st := new(api.Stats)
 	st.CPU = new(api.CPU)
