@@ -8,6 +8,9 @@ run:
 	make build
 	./$(CMD)
 
+docker:
+	docker build --tag $(CMD) -f ./build/Dockerfile .
+
 test:
 	go test -v -count=1 -race -gcflags=-l -timeout=30s ./...
 
