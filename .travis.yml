@@ -31,6 +31,10 @@ jobs:
       name: "build"
       script: make build
 
+    - stage: "Build"
+      name: "docker"
+      script: make docker
+
     - stage: "Lint"
       name: "golangci-lint"
       script: make lint
