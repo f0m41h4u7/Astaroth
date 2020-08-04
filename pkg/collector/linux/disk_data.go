@@ -25,6 +25,7 @@ func GetDiskData() (*api.DiskData, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return parseDiskData(string(mb), string(inode))
 }
 
@@ -64,5 +65,6 @@ func parseDiskData(mb string, inode string) (*api.DiskData, error) {
 			Inode:      iused,
 		}
 	}
+
 	return &disk, nil
 }

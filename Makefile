@@ -27,4 +27,4 @@ gen:
 client:
 	go build -o $(CLIENT_CMD) ./cmd/client/main.go
 
-.PHONY: test lint clean gen client
+.PHONY: build run docker test lint clean gen client

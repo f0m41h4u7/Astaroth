@@ -10,7 +10,10 @@ import (
 
 	"github.com/f0m41h4u7/Astaroth/internal/config"
 	"github.com/f0m41h4u7/Astaroth/internal/server"
+	"github.com/f0m41h4u7/Astaroth/pkg/collector/linux"
 )
+
+const defaultInterval int64 = 1 // default scrape interval, in seconds
 
 var (
 	port    string
@@ -29,8 +32,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	collector := linux.NewCollector()
+	done := make(chan int, 1)
+
 	addr := net.JoinHostPort("127.0.0.1", port)
-	grpc := server.InitServer(addr)
+	grpc := server.InitServer(addr, collector)
 	defer grpc.Stop()
 
 	errs := make(chan error, 1)
@@ -38,13 +44,18 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
 	go func() { errs <- grpc.Start() }()
+	go func() { errs <- collector.Run(defaultInterval, done) }()
+
 	for {
 		select {
 		case <-sigs:
 			signal.Stop(sigs)
+			done <- 0
+
 			return
 		case err = <-errs:
 			if err != nil {
+				done <- 0
 				log.Fatal(err)
 			}
 		}
