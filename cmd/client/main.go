@@ -29,6 +29,7 @@ func main() {
 
 		if data.String() == "" {
 			log.Println("Stream is over")
+
 			return
 		}
 

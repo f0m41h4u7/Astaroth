@@ -13,7 +13,7 @@ import (
 
 var errCannotParseLoadAvg = errors.New("cannot parse loadavg file")
 
-func (c *Collector) getLoadAvg(wg *sync.WaitGroup) error {
+func (c *Collector) getLoadAvg(wg *sync.WaitGroup, ss *Snapshot) error {
 	loadAvg := new(api.LoadAvg)
 	defer wg.Done()
 	l, err := readLoadAvgFile("/proc/loadavg")
@@ -40,20 +40,7 @@ func (c *Collector) getLoadAvg(wg *sync.WaitGroup) error {
 	if err != nil {
 		return err
 	}
-
-	var mutex sync.RWMutex
-	mutex.RLock()
-	if c.storage.idx < c.size {
-		c.storage.loadAvg[c.storage.idx] = loadAvg
-		c.storage.idx++
-		mutex.RUnlock()
-		return nil
-	}
-	mutex.RUnlock()
-	for i := 0; i < int(c.size-1); i++ {
-		c.storage.loadAvg[i] = c.storage.loadAvg[i+1]
-	}
-	c.storage.loadAvg[c.size-1] = loadAvg
+	ss.LoadAvg = loadAvg
 
 	return nil
 }
@@ -80,5 +67,6 @@ func readLoadAvgFile(fname string) (res [5]string, err error) {
 		return res, errCannotParseLoadAvg
 	}
 	res = [5]string{fields[0], fields[1], fields[2], procs[0], procs[1]}
+
 	return res, nil
 }

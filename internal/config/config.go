@@ -55,5 +55,6 @@ func InitConfig(cfgFile string) error {
 	if err != nil {
 		return errCannotParseConfig
 	}
+
 	return nil
 }

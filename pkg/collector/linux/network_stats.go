@@ -22,6 +22,7 @@ func GetNetworkStats() (*api.NetworkStats, error) {
 		TIME_WAIT:  states["TIME-WAIT"],
 		CLOSE_WAIT: states["CLOSE-WAIT"],
 	}
+
 	return ns, nil
 }
 
@@ -36,6 +37,7 @@ func parseTCPConnections(data string) map[string]int64 {
 			numStates[state]++
 		}
 	}
+
 	return numStates
 }
 
@@ -47,5 +49,6 @@ func newMap() map[string]int64 {
 	states["SYN-RCV"] = 0
 	states["TIME-WAIT"] = 0
 	states["CLOSE-WAIT"] = 0
+
 	return states
 }

@@ -15,7 +15,7 @@ var (
 	system = 0.0
 )
 
-func (c *Collector) getCPU(wg *sync.WaitGroup) error {
+func (c *Collector) getCPU(wg *sync.WaitGroup, ss *Snapshot) error {
 	defer wg.Done()
 
 	cpu := new(api.CPU)
@@ -30,20 +30,7 @@ func (c *Collector) getCPU(wg *sync.WaitGroup) error {
 		return err
 	}
 	system = cpu.System
-
-	var mutex sync.RWMutex
-	mutex.RLock()
-	if c.storage.idx < c.size {
-		c.storage.cpu[c.storage.idx] = cpu
-		c.storage.idx++
-		mutex.RUnlock()
-		return nil
-	}
-	mutex.RUnlock()
-	for i := 0; i < int(c.size-1); i++ {
-		c.storage.cpu[i] = c.storage.cpu[i+1]
-	}
-	c.storage.cpu[c.size-1] = cpu
+	ss.CPU = cpu
 
 	return nil
 }
@@ -64,6 +51,7 @@ func calculateCPU(prev float64, fname string) (float64, error) {
 		duration := tstop - tstart
 		prev = float64(cstop-cstart) / float64(duration) * 100.0
 	}
+
 	return prev, nil
 }
 
@@ -79,5 +67,6 @@ func readCPUFile(fname string) (int, error) {
 	if err := scanner.Err(); err != nil {
 		return 0, err
 	}
+
 	return strconv.Atoi(line)
 }
