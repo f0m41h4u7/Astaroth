@@ -9,9 +9,9 @@ import (
 )
 
 type Snapshot struct {
-	CPU     *api.CPU
-	LoadAvg *api.LoadAvg
-	// diskData *api.DiskData
+	CPU      *api.CPU
+	LoadAvg  *api.LoadAvg
+	DiskData *api.DiskData
 	// netStats *api.NetworkStats
 	// to be continued ...
 }
@@ -53,6 +53,13 @@ func (c *Collector) CollectStats() error {
 		wg.Add(1)
 		go func() {
 			errs <- c.getLoadAvg(&wg, &ss)
+		}()
+	}
+
+	if config.RequiredMetrics.Metrics[config.DiskData] == config.On {
+		wg.Add(1)
+		go func() {
+			errs <- c.getDiskData(&wg, &ss)
 		}()
 	}
 

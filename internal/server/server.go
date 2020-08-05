@@ -127,6 +127,7 @@ func (s *Server) averageStats(snapshots []linux.Snapshot) *api.Stats {
 		st.CPU.User /= float64(size)
 		st.CPU.System /= float64(size)
 	}
+
 	if config.RequiredMetrics.Metrics[config.LoadAvg] == config.On {
 		st.LoadAvg = &api.LoadAvg{
 			OneMin:       0.0,
@@ -147,6 +148,25 @@ func (s *Server) averageStats(snapshots []linux.Snapshot) *api.Stats {
 		st.LoadAvg.FifteenMin /= float64(size)
 		st.LoadAvg.ProcsRunning /= int64(size)
 		st.LoadAvg.TotalProcs /= int64(size)
+	}
+
+	if config.RequiredMetrics.Metrics[config.DiskData] == config.On {
+		st.DiskData = &api.DiskData{
+			Data: []*api.FilesystemData{},
+		}
+		for i := 0; i < len(snapshots[0].DiskData.Data); i++ {
+			st.DiskData.Data = append(st.DiskData.Data, snapshots[0].DiskData.Data[i])
+		}
+		for i := 1; i < len(snapshots); i++ {
+			for i, d := range snapshots[i].DiskData.Data {
+				st.DiskData.Data[i].Used += d.Used
+				st.DiskData.Data[i].Inode += d.Inode
+			}
+		}
+		for _, d := range st.DiskData.Data {
+			d.Used /= int64(size)
+			d.Inode /= int64(size)
+		}
 	}
 
 	return st

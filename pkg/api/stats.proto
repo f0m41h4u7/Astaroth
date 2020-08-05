@@ -17,17 +17,6 @@ message CPU {
   double System = 2;
 }
 
-message DiskStat {
-  string Device = 1;
-  int64  Tps    = 2;
-  int64  Kbs    = 3;
-  CPU    CPU    = 4;
-}
-
-message DiskUsage {
-  repeated DiskStat Stat = 1;
-}
-
 message FilesystemData {
   string Filesystem = 1;
   int64  Used       = 2;
@@ -81,10 +70,9 @@ message NetworkStats {
 message Stats {
   LoadAvg      LoadAvg      = 1;
   CPU          CPU          = 2;
-  DiskUsage    DiskUsage    = 3;
-  DiskData     DiskData     = 4;
-  TopTalkers   TopTalkers   = 5;
-  NetworkStats NetworkStats = 6;
+  DiskData     DiskData     = 3;
+  TopTalkers   TopTalkers   = 4;
+  NetworkStats NetworkStats = 5;
 }
 
 message ConnectRequest {

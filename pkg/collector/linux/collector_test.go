@@ -90,6 +90,27 @@ tmpfs                   126993      5   126988    1% /run/user/0`
 		_, err := parseDiskData("", "")
 		require.NotNil(t, err)
 	})
+
+	t.Run("no inode", func(t *testing.T) {
+		mb := `Filesystem     1K-blocks      Used Available Use% Mounted on
+devtmpfs         8057084         0   8057084   0% /dev
+tmpfs            8076408      1776   8074632   1% /run
+tmpfs            8076408         0   8076408   0% /sys/fs/cgroup
+/dev/nvme0n1p5 422120088 230446280 170161616  58% /
+/dev/loop0         56320     56320         0 100% /var/lib/snapd/snap/core18/1880
+/dev/nvme0n1p2    306584     79256    227328  26% /boot/efi
+/dev/loop6        165376    165376         0 100% /var/lib/snapd/snap/gnome-3-28-1804/128`
+		inode := `Filesystem       Inodes   IUsed    IFree IUse% Mounted on
+devtmpfs        2014271     591  2013680    1% /dev
+tmpfs           2019102    1111  2017991    1% /run
+tmpfs           2019102      17  2019085    1% /sys/fs/cgroup
+/dev/nvme0n1p5 26869760 1396968 25472792    6% /
+/dev/loop0        10756   10756        0  100% /var/lib/snapd/snap/core18/1880
+/dev/nvme0n1p2        0       0        0     - /boot/efi
+/dev/loop6        27798   27798        0  100% /var/lib/snapd/snap/gnome-3-28-1804/128`
+		_, err := parseDiskData(mb, inode)
+		require.Nil(t, err)
+	})
 }
 
 func TestNetworkStats(t *testing.T) {

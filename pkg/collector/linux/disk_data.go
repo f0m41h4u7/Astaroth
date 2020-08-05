@@ -5,35 +5,35 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
 )
 
-var (
-	errWrongDiskData    = errors.New("cannot parse disk data")
-	errCannotParseUsed  = errors.New("cannot parse used percentage")
-	errCannotParseInode = errors.New("cannot parse inode percentage")
-)
+var errWrongDiskData = errors.New("cannot parse disk data")
 
 // GetDiskData collects information about disk usage.
-func GetDiskData() (*api.DiskData, error) {
+func (c *Collector) getDiskData(wg *sync.WaitGroup, ss *Snapshot) error {
+	defer wg.Done()
+
 	mb, err := exec.Command("df", "-k").Output()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	inode, err := exec.Command("df", "-i").Output()
 	if err != nil {
-		return nil, err
+		return err
 	}
+	ss.DiskData, err = parseDiskData(string(mb), string(inode))
 
-	return parseDiskData(string(mb), string(inode))
+	return err
 }
 
 func parseDiskData(mb string, inode string) (*api.DiskData, error) {
 	mbLines := strings.Split(mb, "\n")[1:]
 	inodeLines := strings.Split(inode, "\n")[1:]
 	disk := api.DiskData{
-		Data: make([]*api.FilesystemData, len(mbLines)),
+		Data: []*api.FilesystemData{},
 	}
 
 	if (len(mb) == 0) || (len(inode) == 0) {
@@ -43,12 +43,16 @@ func parseDiskData(mb string, inode string) (*api.DiskData, error) {
 	if len(mbLines) != len(inodeLines) {
 		return &disk, errWrongDiskData
 	}
+
 	for i := 0; i < len(mbLines); i++ {
 		fields := strings.Fields(strings.TrimSpace(mbLines[i]))
+		if len(fields) == 0 {
+			continue
+		}
 		fs := fields[0]
 		used, err := strconv.ParseInt(strings.Split(fields[4], "%")[0], 10, 64)
 		if err != nil {
-			return &disk, errCannotParseUsed
+			used = 0
 		}
 		fields = strings.Fields(strings.TrimSpace(inodeLines[i]))
 		if fs != fields[0] {
@@ -56,14 +60,14 @@ func parseDiskData(mb string, inode string) (*api.DiskData, error) {
 		}
 		iused, err := strconv.ParseInt(strings.Split(fields[4], "%")[0], 10, 64)
 		if err != nil {
-			return &disk, errCannotParseInode
+			iused = 0
 		}
 
-		disk.Data[i] = &api.FilesystemData{
+		disk.Data = append(disk.Data, &api.FilesystemData{
 			Filesystem: fs,
 			Used:       used,
 			Inode:      iused,
-		}
+		})
 	}
 
 	return &disk, nil
