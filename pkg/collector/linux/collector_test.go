@@ -136,4 +136,24 @@ ESTAB                        0                         0                        
 		require.Equal(t, int64(1), res["TIME-WAIT"])
 		require.Equal(t, int64(8), res["ESTAB"])
 	})
+
+	t.Run("netstat", func(t *testing.T) {
+		netstat := `Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       User       Inode      PID/Program name    
+tcp        0      0 127.0.0.1:1234          0.0.0.0:*               LISTEN      0          35375      1896/pmcd           
+tcp        0      0 0.0.0.0:1337            0.0.0.0:*               LISTEN      0          37433      999/vncserver-virtu 
+tcp        0      0 127.0.0.1:666           0.0.0.0:*               LISTEN      0          43739      9092/dnsmasq        
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      0          39249      9783/sshd            
+tcp        0      0 127.0.0.1:9090          0.0.0.0:*               LISTEN      0          36389      1345/cupsd          
+udp        0      0 0.0.0.0:31337           0.0.0.0:*                           70         31248      843/avahi-daemon: r 
+udp        0      0 127.0.0.1:4343          0.0.0.0:*                           0          46167      111/NetworkManager  
+udp6       0      0 ::1:2434                :::*                                0          37183      42/chronyd`
+
+		ns, err := parseSockets(netstat)
+		require.Nil(t, err)
+		require.Equal(t, int64(843), ns[5].PID)
+		require.Equal(t, int64(2434), ns[7].Port)
+		require.Equal(t, "udp6", ns[7].Protocol)
+		require.Equal(t, "vncserver-virtu", ns[1].Program)
+	})
 }

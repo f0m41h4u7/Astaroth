@@ -7,7 +7,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/f0m41h4u7/Astaroth/internal/config"
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
 	"github.com/f0m41h4u7/Astaroth/pkg/collector/linux"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -27,7 +26,6 @@ type Server struct {
 	collector       *linux.Collector
 }
 
-// InitServer initializes Server.
 func InitServer(addr string, col *linux.Collector) *Server {
 	s := &Server{
 		addr:            addr,
@@ -42,7 +40,6 @@ func InitServer(addr string, col *linux.Collector) *Server {
 	return s
 }
 
-// Start Server.
 func (s *Server) Start() error {
 	lis, err := net.Listen("tcp", s.addr)
 	if err != nil {
@@ -54,7 +51,6 @@ func (s *Server) Start() error {
 	return err
 }
 
-// Connect to Server.
 func (s *Server) Connect(ctx context.Context, req *api.ConnectRequest) (*empty.Empty, error) {
 	resp := &empty.Empty{}
 	if (req.SendInterval > req.AverageInterval) || (req.SendInterval <= 0) {
@@ -67,7 +63,6 @@ func (s *Server) Connect(ctx context.Context, req *api.ConnectRequest) (*empty.E
 	return resp, nil
 }
 
-// GetStats returns collected statistics.
 func (s *Server) GetStats(_ *empty.Empty, srv api.Astaroth_GetStatsServer) error {
 	log.Printf("new stats listener")
 	statsChan := s.collector.Subscribe()
@@ -111,68 +106,6 @@ func (s *Server) GetStats(_ *empty.Empty, srv api.Astaroth_GetStatsServer) error
 	return nil
 }
 
-func (s *Server) averageStats(snapshots []linux.Snapshot) *api.Stats {
-	st := new(api.Stats)
-	size := len(snapshots)
-
-	if config.RequiredMetrics.Metrics[config.CPU] == config.On {
-		st.CPU = &api.CPU{
-			User:   0,
-			System: 0,
-		}
-		for _, snap := range snapshots {
-			st.CPU.User += snap.CPU.User
-			st.CPU.System += snap.CPU.System
-		}
-		st.CPU.User /= float64(size)
-		st.CPU.System /= float64(size)
-	}
-
-	if config.RequiredMetrics.Metrics[config.LoadAvg] == config.On {
-		st.LoadAvg = &api.LoadAvg{
-			OneMin:       0.0,
-			FiveMin:      0.0,
-			FifteenMin:   0.0,
-			ProcsRunning: 0,
-			TotalProcs:   0,
-		}
-		for _, snap := range snapshots {
-			st.LoadAvg.OneMin += snap.LoadAvg.OneMin
-			st.LoadAvg.FiveMin += snap.LoadAvg.FiveMin
-			st.LoadAvg.FifteenMin += snap.LoadAvg.FifteenMin
-			st.LoadAvg.ProcsRunning += snap.LoadAvg.ProcsRunning
-			st.LoadAvg.TotalProcs += snap.LoadAvg.TotalProcs
-		}
-		st.LoadAvg.OneMin /= float64(size)
-		st.LoadAvg.FiveMin /= float64(size)
-		st.LoadAvg.FifteenMin /= float64(size)
-		st.LoadAvg.ProcsRunning /= int64(size)
-		st.LoadAvg.TotalProcs /= int64(size)
-	}
-
-	if config.RequiredMetrics.Metrics[config.DiskData] == config.On {
-		st.DiskData = &api.DiskData{
-			Data: []*api.FilesystemData{},
-		}
-		for i := 0; i < len(snapshots[0].DiskData.Data); i++ {
-			st.DiskData.Data = append(st.DiskData.Data, snapshots[0].DiskData.Data[i])
-		}
-		for i := 1; i < len(snapshots); i++ {
-			for i, d := range snapshots[i].DiskData.Data {
-				st.DiskData.Data[i].Used += d.Used
-				st.DiskData.Data[i].Inode += d.Inode
-			}
-		}
-		for _, d := range st.DiskData.Data {
-			d.Used /= int64(size)
-			d.Inode /= int64(size)
-		}
-	}
-
-	return st
-}
-
-// Stop Server.
 func (s *Server) Stop() {
 	s.grpc.GracefulStop()
 }

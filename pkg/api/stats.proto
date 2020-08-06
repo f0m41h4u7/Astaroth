@@ -46,7 +46,7 @@ message TopTalkers {
 }
 
 message Sockets {
-  string Command  = 1;
+  string Program  = 1;
   int64  PID      = 2;
   string User     = 3;
   string Protocol = 4;
