@@ -8,10 +8,7 @@ Ahoy matey!: Stats
 
 	Yo-ho-ho: N = 3 and M = 9
 
-  Heave to: Connect
-    Blimey! I send request with N and M parameters
-    Let go and haul I receive empty response
-
   Heave to: Receive Stats
-    Blimey! I subscribe to server
-    Let go and haul I receive stats every N second
+    Blimey! I send connect request with N and M parameters
+    Let go and haul I subscribe to server
+    Aye I receive stats every N second

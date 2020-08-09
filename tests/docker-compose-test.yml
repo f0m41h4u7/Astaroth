@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  integration_tests:
+    container_name: integration_tests
+    build: integration_tests
+    command: "true"
+    depends_on:
+      - astaroth
+  astaroth:
+    container_name: astaroth
+    hostname: astaroth
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile
+    entrypoint: ["./astaroth"]
+    restart: on-failure

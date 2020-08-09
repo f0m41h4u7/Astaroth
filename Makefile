@@ -27,4 +27,13 @@ gen:
 client:
 	go build -o $(CLIENT_CMD) ./cmd/client/main.go
 
-.PHONY: build run docker test lint clean gen client
+bdd:
+	set -e ;\
+	docker-compose -f ./tests/docker-compose-test.yml up --build -d ;\
+	test_status_code=0 ;\
+	docker-compose -f ./tests/docker-compose-test.yml run integration_tests go test || test_status_code=$$? ;\
+	docker-compose -f ./tests/docker-compose-test.yml logs > logs.txt ;\
+	docker-compose -f ./tests/docker-compose-test.yml down ;\
+	exit $$test_status_code ;\
+
+.PHONY: build run docker test lint clean gen client bdd

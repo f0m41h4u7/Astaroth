@@ -5,6 +5,6 @@
     "disk_usage": "on",
     "disk_data": "on",
     "top_talkers": "on",
-    "network_stats": "on"
+    "network_stats": "off"
   }
 }

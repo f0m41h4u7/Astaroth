@@ -45,5 +45,8 @@ jobs:
 
     - stage: "Test"
       name: "unit tests"
-      install: go mod download
       script: make test
+
+    - stage: "Test"
+      name: "integration tests"
+      script: make bdd

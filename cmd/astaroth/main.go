@@ -35,7 +35,7 @@ func main() {
 	collector := linux.NewCollector()
 	done := make(chan int, 1)
 
-	addr := net.JoinHostPort("127.0.0.1", port)
+	addr := net.JoinHostPort("0.0.0.0", port)
 	grpc := server.InitServer(addr, collector)
 	defer grpc.Stop()
 
