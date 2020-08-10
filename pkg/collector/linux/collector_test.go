@@ -115,45 +115,44 @@ tmpfs           2019102      17  2019085    1% /sys/fs/cgroup
 
 func TestNetworkStats(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
-		data := `State                        Recv-Q                    Send-Q                                         Local Address:Port                                                Peer Address:Port                     Process                    
-LISTEN                       0                         5                                                  127.0.0.1:dey-sapi                                                 0.0.0.0:*                                                   
-LISTEN                       0                         5                                                    0.0.0.0:cvsup                                                    0.0.0.0:*                                                   
-LISTEN                       0                         32                                             192.168.122.1:domain                                                   0.0.0.0:*                                                   
-LISTEN                       0                         128                                                  0.0.0.0:ssh                                                      0.0.0.0:*                                                   
-LISTEN                       0                         5                                                  127.0.0.1:ipp                                                      0.0.0.0:*                                                   
-ESTAB                        0                         0                                              192.168.0.1:8882                                             123.123.23.213:https                                               
-ESTAB                        0                         0                                              192.168.0.1:8884                                               123.232.23.23:https                                               
-ESTAB                        0                         0                                              192.168.0.1:8885                                               111.16.10.14:https                                               
-ESTAB                        0                         0                                              192.168.0.1:8886                                                232.75.122.24:https                                               
-ESTAB                        0                         0                                              192.168.0.1:8887                                             151.101.65.140:https                                               
-ESTAB                        0                         0                                              192.168.0.1:8888                                             173.194.73.113:https                                               
-ESTAB                        0                         0                                              192.168.0.1:8889                                            123.101.245.140:https                                               
-TIME-WAIT                    0                         0                                              192.168.0.1:9090                                              123.176.176.76:https                                               
-ESTAB                        0                         0                                              192.168.0.1:9091                                            123.143.432.97:https`
-		res := parseTCPConnections(data)
+		data := `ipv4     2 tcp      6 118 TIME_WAIT src=192.168.0.103 dst=140.82.118.6 sport=56346 dport=443 src=140.82.118.6 dst=192.168.0.103 sport=443 dport=56346 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 zone=0 use=2
+ipv4     2 tcp      6 431962 ESTABLISHED src=192.168.0.103 dst=151.101.84.133 sport=39822 dport=443 src=151.101.84.133 dst=192.168.0.103 sport=443 dport=39822 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 zone=0 use=2
+ipv4     2 tcp      6 0 TIME_WAIT src=192.168.0.103 dst=213.36.253.2 sport=59174 dport=80 src=213.36.253.2 dst=192.168.0.103 sport=80 dport=59174 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 zone=0 use=2
+ipv4     2 unknown  2 255 src=192.168.0.1 dst=224.0.0.251 [UNREPLIED] src=224.0.0.251 dst=192.168.0.1 mark=0 secctx=system_u:object_r:unlabeled_t:s0 zone=0 use=2
+ipv4     2 tcp      6 431975 ESTABLISHED src=192.168.0.103 dst=151.101.84.133 sport=39720 dport=443 src=151.101.84.133 dst=192.168.0.103 sport=443 dport=39720 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 zone=0 use=2
+ipv4     2 tcp      6 431985 ESTABLISHED src=192.168.0.103 dst=151.101.84.133 sport=39836 dport=443 src=151.101.84.133 dst=192.168.0.103 sport=443 dport=39836 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 zone=0 use=2
+ipv4     2 tcp      6 4 TIME_WAIT src=192.168.0.103 dst=74.125.205.147 sport=41794 dport=80 src=74.125.205.147 dst=192.168.0.103 sport=80 dport=41794 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 zone=0 use=2
+ipv4     2 tcp      6 4 TIME_WAIT src=192.168.0.103 dst=213.36.253.2 sport=59190 dport=80 src=213.36.253.2 dst=192.168.0.103 sport=80 dport=59190 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 zone=0 use=2`
+		res, err := parseTCPConnections(data)
+		require.Nil(t, err)
 		require.Equal(t, 6, len(res))
-		require.Equal(t, int64(5), res["LISTEN"])
-		require.Equal(t, int64(1), res["TIME-WAIT"])
-		require.Equal(t, int64(8), res["ESTAB"])
+		require.Equal(t, int64(4), res["TIME-WAIT"])
+		require.Equal(t, int64(3), res["ESTAB"])
+	})
+
+	t.Run("empty data", func(t *testing.T) {
+		data := ""
+		_, err := parseTCPConnections(data)
+		require.NotNil(t, err)
 	})
 
 	t.Run("netstat", func(t *testing.T) {
-		netstat := `Active Internet connections (only servers)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State       User       Inode      PID/Program name    
-tcp        0      0 127.0.0.1:1234          0.0.0.0:*               LISTEN      0          35375      1896/pmcd           
+		netstat := `tcp        0      0 127.0.0.1:1234          0.0.0.0:*               LISTEN      0          35375      1896/pmcd           
 tcp        0      0 0.0.0.0:1337            0.0.0.0:*               LISTEN      0          37433      999/vncserver-virtu 
 tcp        0      0 127.0.0.1:666           0.0.0.0:*               LISTEN      0          43739      9092/dnsmasq        
 tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      0          39249      9783/sshd            
-tcp        0      0 127.0.0.1:9090          0.0.0.0:*               LISTEN      0          36389      1345/cupsd          
-udp        0      0 0.0.0.0:31337           0.0.0.0:*                           70         31248      843/avahi-daemon: r 
-udp        0      0 127.0.0.1:4343          0.0.0.0:*                           0          46167      111/NetworkManager  
-udp6       0      0 ::1:2434                :::*                                0          37183      42/chronyd`
-
+tcp        0      0 127.0.0.1:9090          0.0.0.0:*               LISTEN      0          36389      1345/cupsd`
 		ns, err := parseSockets(netstat)
 		require.Nil(t, err)
-		require.Equal(t, int64(843), ns[5].PID)
-		require.Equal(t, int64(2434), ns[7].Port)
-		require.Equal(t, "udp6", ns[7].Protocol)
+		require.Equal(t, int64(1896), ns[0].PID)
+		require.Equal(t, int64(666), ns[2].Port)
+		require.Equal(t, "tcp", ns[3].Protocol)
 		require.Equal(t, "vncserver-virtu", ns[1].Program)
+	})
+
+	t.Run("empty data", func(t *testing.T) {
+		data := ""
+		_, err := parseSockets(data)
+		require.NotNil(t, err)
 	})
 }

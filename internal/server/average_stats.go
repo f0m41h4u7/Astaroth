@@ -1,6 +1,7 @@
 package server
 
 import (
+	"math"
 	"sync"
 
 	"github.com/f0m41h4u7/Astaroth/internal/config"
@@ -10,6 +11,7 @@ import (
 
 func averageCPU(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) {
 	defer wg.Done()
+	size := float64(len(*snapshots))
 
 	st.CPU = &api.CPU{
 		User:   0,
@@ -19,8 +21,8 @@ func averageCPU(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) 
 		st.CPU.User += snap.CPU.User
 		st.CPU.System += snap.CPU.System
 	}
-	st.CPU.User /= float64(len(*snapshots))
-	st.CPU.System /= float64(len(*snapshots))
+	st.CPU.User = math.Round(st.CPU.User/size*10) / 10
+	st.CPU.System = math.Round(st.CPU.System/size*10) / 10
 }
 
 func averageLoadAvg(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) {
@@ -41,9 +43,9 @@ func averageLoadAvg(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapsh
 		st.LoadAvg.ProcsRunning += snap.LoadAvg.ProcsRunning
 		st.LoadAvg.TotalProcs += snap.LoadAvg.TotalProcs
 	}
-	st.LoadAvg.OneMin /= float64(size)
-	st.LoadAvg.FiveMin /= float64(size)
-	st.LoadAvg.FifteenMin /= float64(size)
+	st.LoadAvg.OneMin = math.Round(st.LoadAvg.OneMin/float64(size)*10) / 10
+	st.LoadAvg.FiveMin = math.Round(st.LoadAvg.FiveMin/float64(size)*10) / 10
+	st.LoadAvg.FifteenMin = math.Round(st.LoadAvg.FifteenMin/float64(size)*10) / 10
 	st.LoadAvg.ProcsRunning /= size
 	st.LoadAvg.TotalProcs /= size
 }
@@ -74,6 +76,13 @@ func averageNetworkStats(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.S
 	defer wg.Done()
 
 	size := int64(len(*snapshots))
+	if size == int64(0) {
+		return
+	}
+	if (*snapshots)[len((*snapshots))-1].NetworkStats == nil {
+		return
+	}
+
 	st.NetworkStats = &api.NetworkStats{
 		ListenSockets: (*snapshots)[len((*snapshots))-1].NetworkStats.ListenSockets,
 		TCPConnStates: &api.States{

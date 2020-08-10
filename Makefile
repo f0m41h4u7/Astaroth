@@ -19,7 +19,7 @@ lint:
 	golangci-lint run ./...
 
 clean:
-	rm $(CMD) $(CLIENT_CMD)
+	rm $(CMD) $(CLIENT_CMD) logs*
 
 gen:
 	go generate ./...
@@ -32,7 +32,6 @@ bdd:
 	docker-compose -f ./tests/docker-compose-test.yml up --build -d ;\
 	test_status_code=0 ;\
 	docker-compose -f ./tests/docker-compose-test.yml run integration_tests go test || test_status_code=$$? ;\
-	docker-compose -f ./tests/docker-compose-test.yml logs > logs.txt ;\
 	docker-compose -f ./tests/docker-compose-test.yml down ;\
 	exit $$test_status_code ;\
 

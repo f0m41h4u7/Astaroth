@@ -1,6 +1,8 @@
 package linux
 
 import (
+	"errors"
+	"io/ioutil"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -9,14 +11,20 @@ import (
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
 )
 
+var ErrWrongData = errors.New("cannot parse tcp connections data")
+
 func (c *Collector) getNetworkStats(wg *sync.WaitGroup, snap *Snapshot) error {
 	defer wg.Done()
 
-	ss, err := exec.Command("ss", "-ta").Output()
+	ss, err := ioutil.ReadFile("/proc/net/nf_conntrack")
 	if err != nil {
 		return err
 	}
-	states := parseTCPConnections(string(ss))
+	states, err := parseTCPConnections(string(ss))
+	if err != nil {
+		return err
+	}
+
 	ns := new(api.NetworkStats)
 	ns.TCPConnStates = &api.States{
 		LISTEN:     states["LISTEN"],
@@ -27,7 +35,8 @@ func (c *Collector) getNetworkStats(wg *sync.WaitGroup, snap *Snapshot) error {
 		CLOSE_WAIT: states["CLOSE-WAIT"],
 	}
 
-	netstat, err := exec.Command("netstat", "-lntupe").Output()
+	cmd := "netstat -lntupe | grep LISTEN"
+	netstat, err := exec.Command("bash", "-c", cmd).Output()
 	if err != nil {
 		return err
 	}
@@ -40,19 +49,33 @@ func (c *Collector) getNetworkStats(wg *sync.WaitGroup, snap *Snapshot) error {
 	return nil
 }
 
-func parseTCPConnections(data string) map[string]int64 {
-	lines := strings.Split(data, "\n")[1:]
+func parseTCPConnections(data string) (map[string]int64, error) {
 	numStates := newMap()
+	if data == "" {
+		return numStates, ErrWrongData
+	}
+
+	lines := strings.Split(data, "\n")
 	for _, line := range lines {
-		state := strings.Fields(strings.TrimSpace(line))[0]
-		if _, ok := numStates[state]; !ok {
-			numStates[state] = int64(1)
-		} else {
-			numStates[state]++
+		switch {
+		case strings.Contains(line, "UNREPLIED"):
+			continue
+		case strings.Contains(line, "LISTEN"):
+			numStates["LISTEN"]++
+		case strings.Contains(line, "ESTABLISHED"):
+			numStates["ESTAB"]++
+		case strings.Contains(line, "FIN_WAIT"):
+			numStates["FIN-WAIT"]++
+		case strings.Contains(line, "SYN_RECV"):
+			numStates["SYN-RCV"]++
+		case strings.Contains(line, "TIME_WAIT"):
+			numStates["TIME-WAIT"]++
+		case strings.Contains(line, "CLOSE"):
+			numStates["CLOSE-WAIT"]++
 		}
 	}
 
-	return numStates
+	return numStates, nil
 }
 
 func newMap() map[string]int64 {
@@ -68,7 +91,10 @@ func newMap() map[string]int64 {
 }
 
 func parseSockets(data string) ([]*api.Sockets, error) {
-	lines := strings.Split(data, "\n")[2:]
+	if data == "" {
+		return nil, ErrWrongData
+	}
+	lines := strings.Split(data, "\n")
 	sockets := make([]*api.Sockets, len(lines))
 
 	for i := 0; i < len(lines); i++ {
@@ -88,18 +114,12 @@ func parseSockets(data string) ([]*api.Sockets, error) {
 
 		sockets[i].User = fields[6]
 
-		for _, f := range fields {
-			if strings.Contains(f, "/") {
-				pid, err := strconv.ParseInt(strings.Split(f, "/")[0], 10, 64)
-				if err != nil {
-					return nil, err
-				}
-				sockets[i].PID = pid
-				sockets[i].Program = strings.Split(f, "/")[1]
-
-				break
-			}
+		pid, err := strconv.ParseInt(strings.Split(fields[8], "/")[0], 10, 64)
+		if err != nil {
+			return nil, err
 		}
+		sockets[i].PID = pid
+		sockets[i].Program = strings.Split(fields[8], "/")[1]
 	}
 
 	return sockets, nil
