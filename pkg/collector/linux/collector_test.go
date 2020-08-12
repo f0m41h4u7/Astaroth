@@ -156,3 +156,20 @@ tcp        0      0 127.0.0.1:9090          0.0.0.0:*               LISTEN      
 		require.NotNil(t, err)
 	})
 }
+
+func TestTopTalkers(t *testing.T) {
+	t.Run("simple", func(t *testing.T) {
+		data := `     ARP, Request who-has 192.168.0.110 tell 192.168.0.1, length 46
+      IP 192.168.0.1.51891 > 255.255.255.255.7437: UDP, length 173
+      IP 192.168.0.112.50858 > 192.168.0.255.137: UDP, length 50
+      IP 192.168.88.1.36963 > 239.255.255.250.1900: UDP, length 167
+      IP 192.168.0.107.49891 > 239.255.255.250.1900: UDP, length 167
+      ARP, Request who-has 192.168.0.100 tell 192.168.0.1, length 46
+      IP 192.168.0.107.34300 > 68.232.34.200.443: Flags [.], ack 1, win 501, length 0
+      IP 68.232.34.200.443 > 192.168.0.107.34300: Flags [.], ack 1, win 136, length 0
+      IP 68.232.34.200.443 > 192.168.0.107.34300: Flags [.], ack 1296915859, win 136, length 0`
+
+		_, err := parseTopTalkers(data)
+		require.Nil(t, err)
+	})
+}

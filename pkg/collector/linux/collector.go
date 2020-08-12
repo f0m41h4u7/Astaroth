@@ -13,7 +13,7 @@ type Snapshot struct {
 	LoadAvg      *api.LoadAvg
 	DiskData     *api.DiskData
 	NetworkStats *api.NetworkStats
-	// to be continued ...
+	TopTalkers   *api.TopTalkers
 }
 
 type Collector struct {
@@ -67,6 +67,13 @@ func (c *Collector) CollectStats() error {
 		wg.Add(1)
 		go func() {
 			errs <- c.getNetworkStats(&wg, &ss)
+		}()
+	}
+
+	if config.RequiredMetrics.Metrics[config.TopTalkers] == config.On {
+		wg.Add(1)
+		go func() {
+			errs <- c.getTopTalkers(&wg, &ss)
 		}()
 	}
 

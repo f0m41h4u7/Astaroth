@@ -2,12 +2,15 @@ package server
 
 import (
 	"math"
+	"sort"
 	"sync"
 
 	"github.com/f0m41h4u7/Astaroth/internal/config"
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
 	"github.com/f0m41h4u7/Astaroth/pkg/collector/linux"
 )
+
+var sumBytes int64
 
 func averageCPU(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) {
 	defer wg.Done()
@@ -112,6 +115,58 @@ func averageNetworkStats(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.S
 	st.NetworkStats.TCPConnStates.CLOSE_WAIT /= size
 }
 
+func averageTopTalkers(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) {
+	defer wg.Done()
+
+	protocols := map[string]int64{}
+	sumBytes = 0
+	st.TopTalkers = &api.TopTalkers{ByProtocol: []*api.ByProtocol{}, ByTraffic: []*api.ByTraffic{}}
+
+	for _, snap := range *snapshots {
+		if snap.TopTalkers == nil {
+			continue
+		}
+		for _, bp := range snap.TopTalkers.ByProtocol {
+			if _, ok := protocols[bp.Protocol]; !ok {
+				st.TopTalkers.ByProtocol = append(st.TopTalkers.ByProtocol, &api.ByProtocol{Protocol: bp.Protocol, Bytes: bp.Bytes})
+				protocols[bp.Protocol] = 1
+			} else {
+				protocols[bp.Protocol]++
+			}
+			if len(protocols) == 5 {
+				break
+			}
+			sumBytes += bp.Bytes
+		}
+
+		for _, bt := range snap.TopTalkers.ByTraffic {
+			f := false
+			for _, t := range st.TopTalkers.ByTraffic {
+				if (t.SourceAddr == bt.SourceAddr) && (t.DestAddr == bt.DestAddr) && (t.Protocol == bt.Protocol) {
+					t.Bps += bt.Bps
+					f = true
+
+					break
+				}
+			}
+			if !f {
+				st.TopTalkers.ByTraffic = append(st.TopTalkers.ByTraffic, &api.ByTraffic{SourceAddr: bt.SourceAddr, DestAddr: bt.DestAddr, Protocol: bt.Protocol, Bps: bt.Bps})
+			}
+		}
+	}
+
+	sort.Slice(st.TopTalkers.ByProtocol, func(i, j int) bool {
+		return st.TopTalkers.ByProtocol[i].Bytes > st.TopTalkers.ByProtocol[j].Bytes
+	})
+	sort.Slice(st.TopTalkers.ByTraffic, func(i, j int) bool {
+		return st.TopTalkers.ByTraffic[i].Bps > st.TopTalkers.ByTraffic[j].Bps
+	})
+
+	for _, p := range st.TopTalkers.ByProtocol {
+		p.Percentage = 100 * p.Bytes / sumBytes
+	}
+}
+
 func (s *Server) averageStats(snapshots []linux.Snapshot) *api.Stats {
 	st := new(api.Stats)
 	var wg sync.WaitGroup
@@ -134,6 +189,11 @@ func (s *Server) averageStats(snapshots []linux.Snapshot) *api.Stats {
 	if config.RequiredMetrics.Metrics[config.NetworkStats] == config.On {
 		wg.Add(1)
 		go averageNetworkStats(&wg, st, &snapshots)
+	}
+
+	if config.RequiredMetrics.Metrics[config.TopTalkers] == config.On {
+		wg.Add(1)
+		go averageTopTalkers(&wg, st, &snapshots)
 	}
 	wg.Wait()
 

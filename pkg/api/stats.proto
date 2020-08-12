@@ -30,7 +30,7 @@ message DiskData {
 message ByProtocol {
   string Protocol   = 1;
   int64  Bytes      = 2;
-  double Percentage = 3;
+  int64  Percentage = 3;
 }
 
 message ByTraffic {
