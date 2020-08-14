@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
-	"github.com/f0m41h4u7/Astaroth/pkg/collector/linux"
+	"github.com/f0m41h4u7/Astaroth/pkg/collector"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 )
@@ -23,10 +23,10 @@ type Server struct {
 	addr            string
 	sendInterval    int64
 	averageInterval int64
-	collector       *linux.Collector
+	collector       *collector.Collector
 }
 
-func InitServer(addr string, col *linux.Collector) *Server {
+func InitServer(addr string, col *collector.Collector) *Server {
 	s := &Server{
 		addr:            addr,
 		sendInterval:    3,
@@ -68,7 +68,7 @@ func (s *Server) GetStats(_ *empty.Empty, srv api.Astaroth_GetStatsServer) error
 	statsChan := s.collector.Subscribe()
 
 	size := int(s.averageInterval / s.sendInterval)
-	stats := []linux.Snapshot{}
+	stats := []collector.Snapshot{}
 	cnt := 0
 
 	ticker := time.NewTicker(time.Duration(s.sendInterval) * time.Second)
@@ -92,7 +92,6 @@ func (s *Server) GetStats(_ *empty.Empty, srv api.Astaroth_GetStatsServer) error
 			msg := s.averageStats(stats)
 			stats = stats[:0]
 			cnt = 0
-			log.Printf("sending data: %s", msg.String())
 			if err := srv.Send(msg); err != nil {
 				log.Printf("unable to send message to stats listener: %v", err)
 				stop = true

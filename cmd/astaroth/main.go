@@ -10,7 +10,7 @@ import (
 
 	"github.com/f0m41h4u7/Astaroth/internal/config"
 	"github.com/f0m41h4u7/Astaroth/internal/server"
-	"github.com/f0m41h4u7/Astaroth/pkg/collector/linux"
+	"github.com/f0m41h4u7/Astaroth/pkg/collector"
 )
 
 const defaultInterval int64 = 1 // default scrape interval, in seconds
@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	collector := linux.NewCollector()
+	collector := collector.NewCollector()
 	done := make(chan int, 1)
 
 	addr := net.JoinHostPort("0.0.0.0", port)

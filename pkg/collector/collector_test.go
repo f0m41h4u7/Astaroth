@@ -1,4 +1,4 @@
-package linux
+package collector
 
 import (
 	"strconv"
@@ -9,12 +9,12 @@ import (
 
 func TestCPU(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
-		cpu, err := readCPUFile("../../../tests/testdata/cpu.txt")
+		cpu, err := readCPUFile("../../tests/testdata/cpu.txt")
 		require.Nil(t, err)
 		require.Equal(t, 42055566250653, cpu)
 	})
 	t.Run("wrong file", func(t *testing.T) {
-		_, err := readCPUFile("../../../tests/testdata/bad_file.txt")
+		_, err := readCPUFile("../../tests/testdata/bad_file.txt")
 		require.NotNil(t, err)
 	})
 	t.Run("nonexistent file", func(t *testing.T) {
@@ -25,7 +25,7 @@ func TestCPU(t *testing.T) {
 
 func TestLoadAvg(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
-		la, err := readLoadAvgFile("../../../tests/testdata/loadavg.txt")
+		la, err := readLoadAvgFile("../../tests/testdata/loadavg.txt")
 		require.Nil(t, err)
 		_, err = strconv.ParseFloat(la[0], 32)
 		require.Nil(t, err)
@@ -44,7 +44,7 @@ func TestLoadAvg(t *testing.T) {
 		require.Equal(t, 924, procsTotal)
 	})
 	t.Run("wrong file", func(t *testing.T) {
-		_, err := readLoadAvgFile("../../../tests/testdata/bad_file.txt")
+		_, err := readLoadAvgFile("../../tests/testdata/bad_file.txt")
 		require.NotNil(t, err)
 	})
 	t.Run("nonexistent file", func(t *testing.T) {

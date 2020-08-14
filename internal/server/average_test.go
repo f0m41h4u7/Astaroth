@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
-	"github.com/f0m41h4u7/Astaroth/pkg/collector/linux"
+	"github.com/f0m41h4u7/Astaroth/pkg/collector"
 	"github.com/stretchr/testify/require"
 )
 
-var snap = []linux.Snapshot{
+var snap = []collector.Snapshot{
 	{
 		CPU: &api.CPU{
 			User:   18.0,

@@ -7,12 +7,12 @@ import (
 
 	"github.com/f0m41h4u7/Astaroth/internal/config"
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
-	"github.com/f0m41h4u7/Astaroth/pkg/collector/linux"
+	"github.com/f0m41h4u7/Astaroth/pkg/collector"
 )
 
 var sumBytes int64
 
-func averageCPU(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) {
+func averageCPU(wg *sync.WaitGroup, st *api.Stats, snapshots *[]collector.Snapshot) {
 	defer wg.Done()
 	size := float64(len(*snapshots))
 
@@ -28,7 +28,7 @@ func averageCPU(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) 
 	st.CPU.System = math.Round(st.CPU.System/size*10) / 10
 }
 
-func averageLoadAvg(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) {
+func averageLoadAvg(wg *sync.WaitGroup, st *api.Stats, snapshots *[]collector.Snapshot) {
 	defer wg.Done()
 	size := int64(len(*snapshots))
 
@@ -53,7 +53,7 @@ func averageLoadAvg(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapsh
 	st.LoadAvg.TotalProcs /= size
 }
 
-func averageDiskData(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) {
+func averageDiskData(wg *sync.WaitGroup, st *api.Stats, snapshots *[]collector.Snapshot) {
 	defer wg.Done()
 	size := int64(len(*snapshots))
 
@@ -75,7 +75,7 @@ func averageDiskData(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snaps
 	}
 }
 
-func averageNetworkStats(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) {
+func averageNetworkStats(wg *sync.WaitGroup, st *api.Stats, snapshots *[]collector.Snapshot) {
 	defer wg.Done()
 
 	size := int64(len(*snapshots))
@@ -115,7 +115,7 @@ func averageNetworkStats(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.S
 	st.NetworkStats.TCPConnStates.CLOSE_WAIT /= size
 }
 
-func averageTopTalkers(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Snapshot) {
+func averageTopTalkers(wg *sync.WaitGroup, st *api.Stats, snapshots *[]collector.Snapshot) {
 	defer wg.Done()
 
 	protocols := map[string]int64{}
@@ -167,7 +167,7 @@ func averageTopTalkers(wg *sync.WaitGroup, st *api.Stats, snapshots *[]linux.Sna
 	}
 }
 
-func (s *Server) averageStats(snapshots []linux.Snapshot) *api.Stats {
+func (s *Server) averageStats(snapshots []collector.Snapshot) *api.Stats {
 	st := new(api.Stats)
 	var wg sync.WaitGroup
 

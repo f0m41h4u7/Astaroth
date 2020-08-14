@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
@@ -33,6 +35,10 @@ func main() {
 			return
 		}
 
-		log.Printf("Data: %s", data.String())
+		stats, err := json.MarshalIndent(data, "", "    ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s\n", string(stats))
 	}
 }
