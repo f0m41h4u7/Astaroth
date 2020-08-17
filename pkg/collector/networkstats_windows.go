@@ -3,6 +3,7 @@ package collector
 
 import (
 	"errors"
+	"log"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -20,12 +21,12 @@ func (c *Collector) getNetworkStats(wg *sync.WaitGroup, snap *Snapshot) error {
 	if err != nil {
 		return err
 	}
-	procs, err := exec.Command("cmd", "/C", "Get-Process").Output()
+	procs, err := exec.Command("cmd", "/C", "tasklist").Output()
 	if err != nil {
 		return err
 	}
 
-	states, err := parseTCPConnections(string(netstat), string(procs))
+	states, err := parseStates(string(netstat))
 	if err != nil {
 		return err
 	}
@@ -38,12 +39,17 @@ func (c *Collector) getNetworkStats(wg *sync.WaitGroup, snap *Snapshot) error {
 		TIME_WAIT:  states["TIME-WAIT"],
 		CLOSE_WAIT: states["CLOSE-WAIT"],
 	}
-
+	
+	ns.ListenSockets, err = parseListenSockets(string(netstat), string(procs))
+	if err != nil {
+		return err
+	}
 	snap.NetworkStats = ns
+	
 	return nil
 }
 
-func parseTCPConnections(data string) (map[string]int64, error) {
+func parseStates(data string) (map[string]int64, error) {
 	numStates := newMap()
 	if data == "" {
 		return numStates, ErrWrongData
@@ -52,7 +58,7 @@ func parseTCPConnections(data string) (map[string]int64, error) {
 	lines := strings.Split(data, "\n")
 	for _, line := range lines {
 		switch {
-		case strings.Contains(line, "LISTENNIG"):
+		case strings.Contains(line, "LISTENING"):
 			numStates["LISTEN"]++
 		case strings.Contains(line, "ESTABLISHED"):
 			numStates["ESTAB"]++
@@ -72,25 +78,31 @@ func parseTCPConnections(data string) (map[string]int64, error) {
 	return numStates, nil
 }
 
-func parseProcs(procs string) (map[int64]string, error) {
-	procMap := map[int64]string{}
-	lines := strings.Split(procs, "\n")
+func parseProcs(procs string) (map[int64][]rune, error) {
+	log.Printf("parse procs")
+	procsMap := map[int64][]rune{}
+	lines := strings.Split(procs, "\n")[3:]
+	log.Printf("len: %d", len(lines))
 	for _, line := range lines {
 		fields := strings.Fields(strings.TrimSpace(line))
 		pid, err := strconv.ParseInt(fields[5], 10, 64)
 		if err != nil {
 			return nil, err
 		}
-		procsMap[pid] = fields[7]
+		procsMap[pid] = []rune(fields[7])
+		log.Printf("%s", procsMap[pid])
 	}
-	return procsMap, err
+	
+	log.Printf("procs map: %+v", procsMap)
+	return procsMap, nil
 }
 
-func parseSockets(ns string, procs string) ([]*api.Sockets, error) {
+func parseListenSockets(ns string, procs string) ([]*api.Sockets, error) {
+	log.Printf("parse listen sockets")
 	if (ns == "") || (procs == "") {
 		return nil, ErrWrongData
 	}
-	lines := strings.Split(ns, "\n")
+	lines := strings.Split(ns, "\n")[3:]
 	sockets := make([]*api.Sockets, len(lines))
 	ps, err := parseProcs(procs)
 	if err != nil {
@@ -105,6 +117,7 @@ func parseSockets(ns string, procs string) ([]*api.Sockets, error) {
 		if fields[3] == "LISTENING" {
 			sockets[i] = new(api.Sockets)
 			sockets[i].Protocol = fields[0]
+			log.Printf("%q", fields[0])
 
 			tmp := strings.Split(fields[1], ":")
 			port, err := strconv.ParseInt(tmp[len(tmp)-1], 10, 64)
@@ -117,7 +130,13 @@ func parseSockets(ns string, procs string) ([]*api.Sockets, error) {
 			if err != nil {
 				return nil, err
 			}
-			sockets[i].Program = ps[pid]
+			prog, ok := ps[sockets[i].PID]
+			if !ok {
+				return nil, ErrWrongData
+			}
+			sockets[i].Program = string(prog)
 		}
 	}
+	
+	return sockets, nil
 }

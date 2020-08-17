@@ -1,10 +1,10 @@
 {
   "metrics": {
-    "load_avg":      "on",
-    "cpu_usage":     "on",
-    "disk_usage":    "on",
-    "disk_data":     "on",
-    "top_talkers":   "on",
+    "load_avg":      "off",
+    "cpu_usage":     "off",
+    "disk_usage":    "off",
+    "disk_data":     "off",
+    "top_talkers":   "off",
     "network_stats": "on"
   }
 }

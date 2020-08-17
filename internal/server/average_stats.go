@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"math"
 	"sort"
 	"sync"
@@ -77,6 +78,7 @@ func averageDiskData(wg *sync.WaitGroup, st *api.Stats, snapshots *[]collector.S
 
 func averageNetworkStats(wg *sync.WaitGroup, st *api.Stats, snapshots *[]collector.Snapshot) {
 	defer wg.Done()
+	//log.Printf("%q", snapshots)
 
 	size := int64(len(*snapshots))
 	if size == int64(0) {
@@ -113,6 +115,8 @@ func averageNetworkStats(wg *sync.WaitGroup, st *api.Stats, snapshots *[]collect
 	st.NetworkStats.TCPConnStates.SYN_RCV /= size
 	st.NetworkStats.TCPConnStates.TIME_WAIT /= size
 	st.NetworkStats.TCPConnStates.CLOSE_WAIT /= size
+	
+	log.Printf("%q", st.NetworkStats.String())
 }
 
 func averageTopTalkers(wg *sync.WaitGroup, st *api.Stats, snapshots *[]collector.Snapshot) {
@@ -196,6 +200,7 @@ func (s *Server) averageStats(snapshots []collector.Snapshot) *api.Stats {
 		go averageTopTalkers(&wg, st, &snapshots)
 	}
 	wg.Wait()
+	log.Printf("have waited: %s", st.String())
 
 	return st
 }
