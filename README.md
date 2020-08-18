@@ -7,7 +7,7 @@
 
 | Metric name   | Linux             | Windows            |
 | ------------- | ------            | -------            |
-| CPU usage     | :heavy_plus_sign: | :heavy_minus_sign: |
+| CPU usage     | :heavy_plus_sign: | :heavy_plus_sign:  |
 | Load average  | :heavy_plus_sign: | :heavy_minus_sign: |
 | Disk data     | :heavy_plus_sign: | :heavy_minus_sign: |
 | Network stats | :heavy_plus_sign: | :heavy_plus_sign:  |

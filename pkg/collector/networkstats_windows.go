@@ -117,7 +117,6 @@ func parseListenSockets(ns string, procs string) ([]*api.Sockets, error) {
 				return nil, err
 			}
 			s.Port = port
-			s.User = ""
 			s.PID, err = strconv.ParseInt(fields[4], 10, 64)
 			if err != nil {
 				return nil, err

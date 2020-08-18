@@ -2,7 +2,6 @@
   "metrics": {
     "load_avg":      "on",
     "cpu_usage":     "on",
-    "disk_usage":    "on",
     "disk_data":     "on",
     "top_talkers":   "on",
     "network_stats": "on"

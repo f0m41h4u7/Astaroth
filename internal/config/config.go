@@ -14,7 +14,6 @@ const (
 
 	LoadAvg      metricsType = "load_avg"
 	CPU          metricsType = "cpu_usage"
-	DiskUsage    metricsType = "disk_usage"
 	DiskData     metricsType = "disk_data"
 	TopTalkers   metricsType = "top_talkers"
 	NetworkStats metricsType = "network_stats"
