@@ -3,7 +3,6 @@ package collector
 import (
 	"strconv"
 	"testing"
-	"fmt"
 
 	"github.com/stretchr/testify/require"
 )
@@ -113,7 +112,7 @@ tmpfs           2019102      17  2019085    1% /sys/fs/cgroup
 		require.Nil(t, err)
 	})
 }
-/*
+
 func TestNetworkStats(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		data := `ipv4     2 tcp      6 118 TIME_WAIT src=192.168.0.103 dst=140.82.118.6 sport=56346 dport=443 src=140.82.118.6 dst=192.168.0.103 sport=443 dport=56346 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 zone=0 use=2
@@ -157,7 +156,7 @@ tcp        0      0 127.0.0.1:9090          0.0.0.0:*               LISTEN      
 		require.NotNil(t, err)
 	})
 }
-*/
+
 func TestTopTalkers(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		data := `     ARP, Request who-has 192.168.0.110 tell 192.168.0.1, length 46
@@ -172,59 +171,5 @@ func TestTopTalkers(t *testing.T) {
 
 		_, err := parseTopTalkers(data)
 		require.Nil(t, err)
-	})
-}
-
-func TestWindows(t *testing.T) {
-	t.Run("simple", func(t *testing.T){
-		data := `
-Активные подключения
-
-  Имя    Локальный адрес        Внешний адрес          Состояние       PID
-  TCP    0.0.0.0:7658           0.0.0.0:0              LISTENING       4
-  TCP    0.0.0.0:1234           0.0.0.0:0              LISTENING       1004
-  TCP    0.0.0.0:8768           0.0.0.0:0              LISTENING       856
-  TCP    127.0.0.1:4321         127.0.0.1:23245        ESTABLISHED     4080
-  TCP    127.0.0.1:5432         127.0.0.1:9876         TIME_WAIT       0
-  TCP    [::]:3456              [::]:0                 LISTENING       3236
-  TCP    127.0.0.1:11343        127.0.0.1:12309        ESTABLISHED     11332
-  TCP    127.0.0.1:6543         0.0.0.0:0              LISTENING       12200
-  TCP    [::]:23456             [::]:0                 LISTENING       2484
-  TCP    [::]:34567             [::]:0                 LISTENING       972
-  TCP    127.0.0.1:45678        12.45.23.0:443         CLOSE_WAIT      12460`
-	
-	procs := `
-Имя образа                     PID Имя сессии          № сеанса       Память
-========================= ======== ================ =========== ============
-System Idle Process              0 Services                   0         8 КБ
-System                           4 Services                   0     1 308 КБ
-wininit.exe                    856 Services                   0     6 532 КБ
-services.exe                   972 Services                   0    10 532 КБ
-lsass.exe                     1004 Services                   0    24 032 КБ
-CxAudMsg64.exe                4072 Services                   0     8 960 КБ
-mDNSResponder.exe             4080 Services                   0     6 736 КБ
-OneApp.IGCC.WinService.ex     3236 Services                   0    37 184 КБ
-svchost.exe                   6676 Services                   0     6 372 КБ
-ctfmon.exe                    7872 Console                    1    15 160 КБ
-steam.exe                    12200 Console                    1   216 984 КБ
-SynTPEnh.exe                  7976 Console                    1    34 292 КБ
-mediaget.exe                 11332 Console                    1    89 032 КБ
-svchost.exe                   2484 Services                   0    17 788 КБ
-EpicGamesLauncher.exe        12460 Console                    1   147 596 КБ
-UnrealCEFSubProcess.exe      13096 Console                    1    33 764 КБ
-ShellExperienceHost.exe       3468 Console                    1    61 532 КБ
-tasklist.exe                 13768 Console                    1     8 688 КБ
-`
-		res, err := parseStates(data)
-		require.Nil(t, err)
-		require.Equal(t, 6, len(res))
-		require.Equal(t, int64(1), res["TIME-WAIT"])
-		require.Equal(t, int64(2), res["ESTAB"])
-		require.Equal(t, int64(7), res["LISTEN"])
-		require.Equal(t, int64(1), res["CLOSE-WAIT"])
-		
-		lis, err := parseListenSockets(data, procs)
-		require.Nil(t, err)
-		fmt.Println(lis)
 	})
 }
