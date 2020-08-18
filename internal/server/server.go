@@ -76,6 +76,7 @@ func (s *Server) GetStats(_ *empty.Empty, srv api.Astaroth_GetStatsServer) error
 	for !stop {
 		select {
 		case <-statsChan:
+			log.Printf("received: %q", <-statsChan)
 			if len(stats) < size {
 				stats = append(stats, <-statsChan)
 				cnt++
@@ -92,6 +93,7 @@ func (s *Server) GetStats(_ *empty.Empty, srv api.Astaroth_GetStatsServer) error
 			msg := s.averageStats(stats)
 			stats = stats[:0]
 			cnt = 0
+			log.Printf("after average")
 			if err := srv.Send(msg); err != nil {
 				log.Printf("unable to send message to stats listener: %v", err)
 				stop = true

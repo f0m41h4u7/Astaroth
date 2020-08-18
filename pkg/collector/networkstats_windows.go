@@ -1,4 +1,3 @@
-// +build windows
 package collector
 
 import (
@@ -20,12 +19,12 @@ func (c *Collector) getNetworkStats(wg *sync.WaitGroup, snap *Snapshot) error {
 	if err != nil {
 		return err
 	}
-	procs, err := exec.Command("cmd", "/C", "Get-Process").Output()
+	procs, err := exec.Command("cmd", "/C", "tasklist").Output()
 	if err != nil {
 		return err
 	}
 
-	states, err := parseTCPConnections(string(netstat), string(procs))
+	states, err := parseStates(string(netstat))
 	if err != nil {
 		return err
 	}
@@ -39,11 +38,16 @@ func (c *Collector) getNetworkStats(wg *sync.WaitGroup, snap *Snapshot) error {
 		CLOSE_WAIT: states["CLOSE-WAIT"],
 	}
 
+	ns.ListenSockets, err = parseListenSockets(string(netstat), string(procs))
+	if err != nil {
+		return err
+	}
 	snap.NetworkStats = ns
+
 	return nil
 }
 
-func parseTCPConnections(data string) (map[string]int64, error) {
+func parseStates(data string) (map[string]int64, error) {
 	numStates := newMap()
 	if data == "" {
 		return numStates, ErrWrongData
@@ -52,7 +56,7 @@ func parseTCPConnections(data string) (map[string]int64, error) {
 	lines := strings.Split(data, "\n")
 	for _, line := range lines {
 		switch {
-		case strings.Contains(line, "LISTENNIG"):
+		case strings.Contains(line, "LISTENING"):
 			numStates["LISTEN"]++
 		case strings.Contains(line, "ESTABLISHED"):
 			numStates["ESTAB"]++
@@ -73,8 +77,8 @@ func parseTCPConnections(data string) (map[string]int64, error) {
 }
 
 func parseProcs(procs string) (map[int64]string, error) {
-	procMap := map[int64]string{}
-	lines := strings.Split(procs, "\n")
+	procsMap := map[int64][]rune{}
+	lines := strings.Split(procs, "\n")[3:]
 	for _, line := range lines {
 		fields := strings.Fields(strings.TrimSpace(line))
 		pid, err := strconv.ParseInt(fields[5], 10, 64)
@@ -83,14 +87,15 @@ func parseProcs(procs string) (map[int64]string, error) {
 		}
 		procsMap[pid] = fields[7]
 	}
-	return procsMap, err
+
+	return procsMap, nil
 }
 
-func parseSockets(ns string, procs string) ([]*api.Sockets, error) {
+func parseListenSockets(ns string, procs string) ([]*api.Sockets, error) {
 	if (ns == "") || (procs == "") {
 		return nil, ErrWrongData
 	}
-	lines := strings.Split(ns, "\n")
+	lines := strings.Split(ns, "\n")[3:]
 	sockets := make([]*api.Sockets, len(lines))
 	ps, err := parseProcs(procs)
 	if err != nil {
@@ -117,7 +122,13 @@ func parseSockets(ns string, procs string) ([]*api.Sockets, error) {
 			if err != nil {
 				return nil, err
 			}
-			sockets[i].Program = ps[pid]
+			var ok bool
+			sockets[i].Program, ok = ps[sockets[i].PID]
+			if !ok {
+				return nil, ErrWrongData
+			}
 		}
 	}
+
+	return sockets, nil
 }
