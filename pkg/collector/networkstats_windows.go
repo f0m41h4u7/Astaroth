@@ -1,3 +1,4 @@
+// +build windows
 package collector
 
 import (
@@ -76,19 +77,21 @@ func parseStates(data string) (map[string]int64, error) {
 	return numStates, nil
 }
 
-func parseProcs(procs string) (map[int64]string, error) {
-	procsMap := map[int64][]rune{}
+func parseProcs(procs string) map[int64]string {
+	procsMap := map[int64]string{}
 	lines := strings.Split(procs, "\n")[3:]
 	for _, line := range lines {
 		fields := strings.Fields(strings.TrimSpace(line))
-		pid, err := strconv.ParseInt(fields[5], 10, 64)
-		if err != nil {
-			return nil, err
+		if len(fields) == 0 {
+			continue
 		}
-		procsMap[pid] = fields[7]
+		pid, err := strconv.ParseInt(fields[1], 10, 64)
+		if err != nil {
+			continue
+		}
+		procsMap[pid] = fields[0]
 	}
-
-	return procsMap, nil
+	return procsMap
 }
 
 func parseListenSockets(ns string, procs string) ([]*api.Sockets, error) {
@@ -96,11 +99,8 @@ func parseListenSockets(ns string, procs string) ([]*api.Sockets, error) {
 		return nil, ErrWrongData
 	}
 	lines := strings.Split(ns, "\n")[3:]
-	sockets := make([]*api.Sockets, len(lines))
-	ps, err := parseProcs(procs)
-	if err != nil {
-		return nil, err
-	}
+	sockets := []*api.Sockets{}
+	ps := parseProcs(procs)
 
 	for i := 0; i < len(lines); i++ {
 		fields := strings.Fields(strings.TrimSpace(lines[i]))
@@ -108,25 +108,26 @@ func parseListenSockets(ns string, procs string) ([]*api.Sockets, error) {
 			continue
 		}
 		if fields[3] == "LISTENING" {
-			sockets[i] = new(api.Sockets)
-			sockets[i].Protocol = fields[0]
+			s := new(api.Sockets)
+			s.Protocol = fields[0]
 
 			tmp := strings.Split(fields[1], ":")
 			port, err := strconv.ParseInt(tmp[len(tmp)-1], 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			sockets[i].Port = port
-			sockets[i].User = ""
-			sockets[i].PID, err = strconv.ParseInt(fields[4], 10, 64)
+			s.Port = port
+			s.User = ""
+			s.PID, err = strconv.ParseInt(fields[4], 10, 64)
 			if err != nil {
 				return nil, err
 			}
 			var ok bool
-			sockets[i].Program, ok = ps[sockets[i].PID]
+			s.Program, ok = ps[s.PID]
 			if !ok {
 				return nil, ErrWrongData
 			}
+			sockets = append(sockets, s)
 		}
 	}
 

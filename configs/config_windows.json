@@ -1,0 +1,10 @@
+{
+  "metrics": {
+    "load_avg":      "off",
+    "cpu_usage":     "off",
+    "disk_usage":    "off",
+    "disk_data":     "off",
+    "top_talkers":   "off",
+    "network_stats": "on"
+  }
+}
