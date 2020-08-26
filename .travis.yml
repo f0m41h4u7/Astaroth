@@ -40,10 +40,6 @@ jobs:
       script: make lint
 
     - stage: "Test"
-      name: "go get"
-      script: cd /tmp && go get "github.com/${TRAVIS_REPO_SLUG}@${BRANCH}"
-
-    - stage: "Test"
       name: "unit tests"
       script: make test
 
