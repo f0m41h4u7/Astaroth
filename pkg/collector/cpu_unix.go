@@ -17,7 +17,7 @@ var (
 	system = 0.0
 )
 
-func (c *Collector) getCPU(wg *sync.WaitGroup, ss *Snapshot) error {
+func (c *CPUMetric) Get(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	cpu := new(api.CPU)
@@ -32,7 +32,7 @@ func (c *Collector) getCPU(wg *sync.WaitGroup, ss *Snapshot) error {
 		return err
 	}
 	system = cpu.System
-	ss.CPU = cpu
+	c.CPU = cpu
 
 	return nil
 }

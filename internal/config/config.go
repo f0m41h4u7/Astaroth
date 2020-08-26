@@ -5,6 +5,9 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+
+	"github.com/f0m41h4u7/Astaroth/pkg/api"
+	"github.com/f0m41h4u7/Astaroth/pkg/collector"
 )
 
 // Available metrics.
@@ -20,11 +23,16 @@ const (
 )
 
 var (
-	// RequiredMetrics is a global Config.
-	RequiredMetrics Config
-
 	errCannotReadConfig  = errors.New("cannot read config file")
 	errCannotParseConfig = errors.New("cannot parse config file")
+
+	metricsIfaces = map[metricsType]collector.Metric{
+		LoadAvg:      &collector.LoadAvgMetric{LoadAvg: new(api.LoadAvg)},
+		CPU:          &collector.CPUMetric{CPU: new(api.CPU)},
+		DiskData:     &collector.DiskDataMetric{DiskData: new(api.DiskData)},
+		NetworkStats: &collector.NetworkStatsMetric{NetworkStats: new(api.NetworkStats)},
+		TopTalkers:   &collector.TopTalkersMetric{TopTalkers: new(api.TopTalkers)},
+	}
 )
 
 type (
@@ -37,23 +45,31 @@ type Config struct {
 	Metrics map[metricsType]isIncluded `json:"metrics"`
 }
 
-// InitConfig initializes RequiredMetrics config.
-func InitConfig(cfgFile string) error {
+// ReadConfig returns array of required metrics.
+func ReadConfig(cfgFile string) ([]collector.Metric, error) {
+	required := Config{}
 	if cfgFile == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		cfgFile = cwd + "/configs/config.json"
 	}
 	conf, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
-		return errCannotReadConfig
+		return nil, errCannotReadConfig
 	}
-	err = json.Unmarshal(conf, &RequiredMetrics)
+	err = json.Unmarshal(conf, &required)
 	if err != nil {
-		return errCannotParseConfig
+		return nil, errCannotParseConfig
 	}
 
-	return nil
+	metrics := []collector.Metric{}
+	for mt, status := range required.Metrics {
+		if status == On {
+			metrics = append(metrics, metricsIfaces[mt])
+		}
+	}
+
+	return metrics, nil
 }

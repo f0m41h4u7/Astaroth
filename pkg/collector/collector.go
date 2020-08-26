@@ -3,31 +3,29 @@ package collector
 import (
 	"sync"
 	"time"
-
-	"github.com/f0m41h4u7/Astaroth/internal/config"
-	"github.com/f0m41h4u7/Astaroth/pkg/api"
 )
 
 type Snapshot struct {
-	CPU          *api.CPU
-	LoadAvg      *api.LoadAvg
-	DiskData     *api.DiskData
-	NetworkStats *api.NetworkStats
-	TopTalkers   *api.TopTalkers
+	Metrics []Metric
 }
 
 type Collector struct {
 	mutex       sync.RWMutex
 	subscribers []chan Snapshot
+	snapCurrent *Snapshot
 }
 
-func NewCollector() *Collector {
+func NewCollector(mt []Metric) *Collector {
+	//	log.Printf("%+v", mt)
 	return &Collector{
 		subscribers: []chan Snapshot{},
+		snapCurrent: &Snapshot{
+			Metrics: mt,
+		},
 	}
 }
 
-func (c *Collector) Subscribe() chan Snapshot {
+func (c *Collector) Subscribe() <-chan Snapshot {
 	ch := make(chan Snapshot)
 
 	c.mutex.Lock()
@@ -39,59 +37,34 @@ func (c *Collector) Subscribe() chan Snapshot {
 
 func (c *Collector) CollectStats() error {
 	var wg sync.WaitGroup
-	var ss Snapshot
 	errs := make(chan error)
 
-	if config.RequiredMetrics.Metrics[config.CPU] == config.On {
+	for _, mt := range c.snapCurrent.Metrics {
 		wg.Add(1)
-		go func() {
-			errs <- c.getCPU(&wg, &ss)
-		}()
-	}
-
-	if config.RequiredMetrics.Metrics[config.LoadAvg] == config.On {
-		wg.Add(1)
-		go func() {
-			errs <- c.getLoadAvg(&wg, &ss)
-		}()
-	}
-
-	if config.RequiredMetrics.Metrics[config.DiskData] == config.On {
-		wg.Add(1)
-		go func() {
-			errs <- c.getDiskData(&wg, &ss)
-		}()
-	}
-
-	if config.RequiredMetrics.Metrics[config.NetworkStats] == config.On {
-		wg.Add(1)
-		go func() {
-			errs <- c.getNetworkStats(&wg, &ss)
-		}()
-	}
-
-	if config.RequiredMetrics.Metrics[config.TopTalkers] == config.On {
-		wg.Add(1)
-		go func() {
-			errs <- c.getTopTalkers(&wg, &ss)
-		}()
+		go func(mt Metric) {
+			errs <- mt.Get(&wg)
+		}(mt)
+		//	log.Printf("%+v", mt)
 	}
 
 	wg.Wait()
-	if (len(errs) != 0) && (<-errs != nil) {
-		return <-errs
+	if len(errs) != 0 {
+		err := <-errs
+		if err != nil {
+			return <-errs
+		}
 	}
 
 	c.mutex.RLock()
 	for _, ch := range c.subscribers {
-		ch <- ss
+		ch <- *c.snapCurrent
 	}
 	c.mutex.RUnlock()
 
 	return nil
 }
 
-func (c *Collector) Run(interval int64, done <-chan int) error {
+func (c *Collector) Run(interval int64, done <-chan struct{}) error {
 	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 	for {
 		select {

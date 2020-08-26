@@ -13,34 +13,34 @@ import (
 
 var errCannotParseLoadAvg = errors.New("cannot parse loadavg file")
 
-func (c *Collector) getLoadAvg(wg *sync.WaitGroup, ss *Snapshot) error {
+func (l *LoadAvgMetric) Get(wg *sync.WaitGroup) error {
 	loadAvg := new(api.LoadAvg)
 	defer wg.Done()
-	l, err := readLoadAvgFile("/proc/loadavg")
+	data, err := readLoadAvgFile("/proc/loadavg")
 	if err != nil {
 		return err
 	}
-	loadAvg.OneMin, err = strconv.ParseFloat(l[0], 32)
+	loadAvg.OneMin, err = strconv.ParseFloat(data[0], 32)
 	if err != nil {
 		return err
 	}
-	loadAvg.FiveMin, err = strconv.ParseFloat(l[1], 32)
+	loadAvg.FiveMin, err = strconv.ParseFloat(data[1], 32)
 	if err != nil {
 		return err
 	}
-	loadAvg.FifteenMin, err = strconv.ParseFloat(l[2], 32)
+	loadAvg.FifteenMin, err = strconv.ParseFloat(data[2], 32)
 	if err != nil {
 		return err
 	}
-	loadAvg.ProcsRunning, err = strconv.ParseInt(l[3], 10, 64)
+	loadAvg.ProcsRunning, err = strconv.ParseInt(data[3], 10, 64)
 	if err != nil {
 		return err
 	}
-	loadAvg.TotalProcs, err = strconv.ParseInt(l[4], 10, 64)
+	loadAvg.TotalProcs, err = strconv.ParseInt(data[4], 10, 64)
 	if err != nil {
 		return err
 	}
-	ss.LoadAvg = loadAvg
+	l.LoadAvg = loadAvg
 
 	return nil
 }

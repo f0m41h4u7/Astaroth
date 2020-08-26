@@ -8,9 +8,7 @@ import (
 
 func TestConfig(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
-		err := InitConfig("../../tests/testdata/config.json")
+		_, err := ReadConfig("../../tests/testdata/config.json")
 		require.Nil(t, err)
-		res := string(RequiredMetrics.Metrics[LoadAvg])
-		require.Equal(t, "on", res)
 	})
 }

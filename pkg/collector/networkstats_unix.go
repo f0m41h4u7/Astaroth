@@ -15,7 +15,7 @@ import (
 
 var ErrWrongData = errors.New("cannot parse tcp connections data")
 
-func (c *Collector) getNetworkStats(wg *sync.WaitGroup, snap *Snapshot) error {
+func (n *NetworkStatsMetric) Get(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	ss, err := ioutil.ReadFile("/proc/net/nf_conntrack")
@@ -46,7 +46,7 @@ func (c *Collector) getNetworkStats(wg *sync.WaitGroup, snap *Snapshot) error {
 	if err != nil {
 		return err
 	}
-	snap.NetworkStats = ns
+	n.NetworkStats = ns
 
 	return nil
 }

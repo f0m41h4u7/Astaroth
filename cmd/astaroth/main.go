@@ -27,13 +27,13 @@ func init() {
 
 func main() {
 	flag.Parse()
-	err := config.InitConfig(cfgFile)
+	metrics, err := config.ReadConfig(cfgFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	collector := collector.NewCollector()
-	done := make(chan int, 1)
+	collector := collector.NewCollector(metrics)
+	done := make(chan struct{}, 1)
 
 	addr := net.JoinHostPort("0.0.0.0", port)
 	grpc := server.InitServer(addr, collector)
@@ -50,12 +50,12 @@ func main() {
 		select {
 		case <-sigs:
 			signal.Stop(sigs)
-			done <- 0
+			close(done)
 
 			return
 		case err = <-errs:
 			if err != nil {
-				done <- 0
+				close(done)
 				log.Fatal(err)
 			}
 		}

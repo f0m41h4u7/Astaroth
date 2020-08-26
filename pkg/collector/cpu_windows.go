@@ -11,7 +11,7 @@ import (
 	"github.com/f0m41h4u7/Astaroth/pkg/api"
 )
 
-func (c *Collector) getCPU(wg *sync.WaitGroup, ss *Snapshot) error {
+func (c *CPUMetric) Get(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	data, err := exec.Command("cmd", "/C", "wmic", "cpu", "get", "loadpercentage", "/value").Output()
@@ -25,7 +25,7 @@ func (c *Collector) getCPU(wg *sync.WaitGroup, ss *Snapshot) error {
 	if err != nil {
 		return err
 	}
-	ss.CPU = cpu
+	c.CPU = cpu
 
 	return nil
 }

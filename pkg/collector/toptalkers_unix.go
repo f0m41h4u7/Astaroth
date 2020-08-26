@@ -13,7 +13,7 @@ import (
 
 var ErrWrongTopTalkersData = errors.New("cannot parse top talkers data")
 
-func (c *Collector) getTopTalkers(wg *sync.WaitGroup, ss *Snapshot) error {
+func (t *TopTalkersMetric) Get(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	tcpdump := "tcpdump -tnn -c 40 -i any -Q inout -l | uniq | head"
@@ -35,7 +35,7 @@ func (c *Collector) getTopTalkers(wg *sync.WaitGroup, ss *Snapshot) error {
 	if err := scanner.Err(); err != nil {
 		return err
 	}
-	ss.TopTalkers, err = parseTopTalkers(out)
+	t.TopTalkers, err = parseTopTalkers(out)
 
 	return err
 }

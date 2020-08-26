@@ -12,8 +12,7 @@ import (
 
 var errWrongDiskData = errors.New("cannot parse disk data")
 
-// GetDiskData collects information about disk usage.
-func (c *Collector) getDiskData(wg *sync.WaitGroup, ss *Snapshot) error {
+func (d *DiskDataMetric) Get(wg *sync.WaitGroup) error {
 	defer wg.Done()
 
 	mb, err := exec.Command("df", "-k").Output()
@@ -24,7 +23,7 @@ func (c *Collector) getDiskData(wg *sync.WaitGroup, ss *Snapshot) error {
 	if err != nil {
 		return err
 	}
-	ss.DiskData, err = parseDiskData(string(mb), string(inode))
+	d.DiskData, err = parseDiskData(string(mb), string(inode))
 
 	return err
 }
